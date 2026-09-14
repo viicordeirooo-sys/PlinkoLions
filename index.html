@@ -65,7 +65,8 @@ const prizeData=[
 ];
 for(const side of [document.querySelector('.lights.l'),document.querySelector('.lights.r')]) for(let i=0;i<5;i++){const s=document.createElement('i');side.appendChild(s)}
 const prizeBox=document.getElementById('prizes');
-prizeData.forEach((p,i)=>{const d=document.createElement('div');d.className='prize';d.style.setProperty('--c1',p[3]);d.style.setProperty('--c2',p[4]);d.innerHTML=`<div class="icon ${p[2]}">${p[5]}</div><div class="label">${p[0]}<br>${p[1]}</div>`;prizeBox.appendChild(d)});
+const displayOrder=[0,1,2,3,4,10,11,12,9,8,7,6,5];
+displayOrder.forEach(i=>{const p=prizeData[i];const d=document.createElement('div');d.className='prize';d.style.setProperty('--c1',p[3]);d.style.setProperty('--c2',p[4]);d.innerHTML=`<div class="icon ${p[2]}">${p[5]}</div><div class="label">${p[0]}<br>${p[1]}</div>`;prizeBox.appendChild(d)});
 
 let dpr=1,W=0,H=0,pegs=[],ball=null,dragging=false,running=false,targetBin=0,last=0,standby=true;
 let cfg={weights:[12,10,7,5,4,3,2,1.5,1.2,.8,3,2,1],active:Array(13).fill(true),stock:Array(13).fill(999)};
@@ -115,7 +116,7 @@ function pickTarget(){
  let a=prizeData.map((_,i)=>(cfg.active?.[i]!==false && (+cfg.stock?.[i]||999)>0)?Math.max(0,+cfg.weights?.[i]||0):0),sum=a.reduce((x,y)=>x+y,0);
  if(!sum)return 0;let q=Math.random()*sum;for(let i=0;i<a.length;i++){q-=a[i];if(q<=0)return i}return a.length-1;
 }
-function targetX(i){return W*(i+.5)/13}
+function targetX(i){return W*(displayOrder.indexOf(i)+.5)/13}
 function point(e){const r=canvas.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}}
 function begin(e){
  if(running)return;
