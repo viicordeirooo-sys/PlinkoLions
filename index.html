@@ -136,7 +136,7 @@ canvas.addEventListener('pointercancel',release,{passive:false});
 function step(){
  if(running&&ball){
   const dt=1;
-  ball.vy+=.055;ball.x+=ball.vx;ball.y+=ball.vy;
+  ball.vy+=.075;ball.x+=ball.vx;ball.y+=ball.vy;
   ball.vx*=.996;
   // very small bias toward selected bin; collisions remain the visible motion
   ball.vx+=(targetX(targetBin)-ball.x)*.000045;
