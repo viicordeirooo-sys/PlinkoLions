@@ -2,376 +2,241 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>Plinko</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<title>PLINKO — Jogo</title>
 <style>
-  *{box-sizing:border-box}
-  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07131d}
-  body{font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-  #game{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none}
-  #hint{
-    position:fixed;left:50%;top:18px;transform:translateX(-50%);
-    padding:8px 14px;border-radius:999px;
-    background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);
-    color:rgba(255,255,255,.65);font-size:12px;letter-spacing:.08em;
-    opacity:.8;transition:opacity .35s;pointer-events:none
-  }
-  #result{
-    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);
-    min-width:min(520px,82vw);padding:22px 30px;text-align:center;
-    border-radius:18px;background:rgba(8,10,14,.94);
-    border:2px solid #e7b94f;box-shadow:0 18px 80px rgba(0,0,0,.65);
-    color:white;opacity:0;pointer-events:none;transition:.25s ease
-  }
-  #result.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-  #result .small{font-size:13px;letter-spacing:.18em;color:#d8b05a;text-transform:uppercase}
-  #result .big{font-size:clamp(28px,5vw,64px);font-weight:900;margin-top:7px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#030405;color:#fff;font-family:Arial,Helvetica,sans-serif;touch-action:none}
+body{display:flex;align-items:center;justify-content:center}
+#stage{
+  position:relative;width:100vw;height:100vh;max-width:1920px;max-height:1080px;
+  overflow:hidden;background:
+    radial-gradient(ellipse at 50% 18%,rgba(255,176,48,.15),transparent 28%),
+    radial-gradient(ellipse at 50% 82%,rgba(160,0,0,.16),transparent 38%),
+    linear-gradient(90deg,#090909 0,#160506 9%,#050505 20%,#050505 80%,#160506 91%,#090909 100%);
+}
+#stage:before,#stage:after{content:"";position:absolute;top:0;bottom:0;width:18%;z-index:0;
+  background:linear-gradient(90deg,#020202 0,#35050b 42%,#130204 78%,#020202 100%);
+  box-shadow:inset -30px 0 45px #000;transform:skewX(-5deg);opacity:.96}
+#stage:before{left:-4%}#stage:after{right:-4%;transform:scaleX(-1) skewX(-5deg)}
+.curtain{position:absolute;top:-5%;bottom:-5%;width:11%;z-index:1;opacity:.9;
+ background:repeating-linear-gradient(90deg,#220207 0 9px,#8c0715 13px,#34020a 23px,#a30b1a 30px);
+ filter:drop-shadow(0 0 18px #000)}
+.curtain.l{left:5%;transform:skewX(-9deg)}.curtain.r{right:5%;transform:scaleX(-1) skewX(-9deg)}
+.header{position:absolute;top:1.4%;left:50%;transform:translateX(-50%);z-index:8;text-align:center;width:60%}
+.title{font-weight:1000;font-size:clamp(42px,5.3vw,94px);line-height:.9;letter-spacing:.08em;
+ color:#ffd45a;text-shadow:0 0 4px #fff,0 0 11px #ff9d00,0 0 28px #ff5a00,4px 5px 0 #7d3a00;
+ white-space:nowrap}
+.title span{display:inline-block;position:relative;padding:0 .045em}
+.title span:after{content:"";position:absolute;width:.12em;height:.12em;border-radius:50%;background:#fff7b2;
+ box-shadow:0 0 5px #fff,0 0 12px #ffb000;left:45%;top:6%}
+.subtitle{margin-top:8px;font-size:clamp(13px,1.35vw,25px);font-weight:800;letter-spacing:.09em;color:#ffd76b;
+ text-shadow:0 0 8px #ff8a00}
+.side{position:absolute;top:9%;z-index:5;width:12%;font-weight:900;text-align:center;line-height:1.28;
+ font-size:clamp(12px,1.25vw,23px);letter-spacing:.03em;color:#ffe09a;text-shadow:0 0 9px #ff8400}
+.side.left{left:8%}.side.right{right:8%}
+.marquee{position:absolute;top:5%;left:3%;right:3%;height:10%;z-index:3;pointer-events:none}
+.marquee:before,.marquee:after{content:"";position:absolute;top:0;width:7px;height:100%;
+ background:linear-gradient(#fff,#ffb31c,#fff,#ffb31c);box-shadow:0 0 12px #ff9b00}
+.marquee:before{left:0}.marquee:after{right:0}
+.boardWrap{position:absolute;left:50%;top:16%;transform:translateX(-50%);width:min(66vw,1180px);height:72%;z-index:6}
+.boardGlow{position:absolute;inset:0;border-radius:16% 16% 4% 4%;filter:blur(18px);
+ background:radial-gradient(ellipse at 50% 50%,rgba(255,177,22,.17),transparent 66%);pointer-events:none}
+#game{position:absolute;inset:0;width:100%;height:100%}
+#ui{position:absolute;inset:0;z-index:9;pointer-events:none}
+#hint{position:absolute;top:13.2%;left:50%;transform:translateX(-50%);font-size:clamp(12px,1.1vw,21px);
+ font-weight:900;letter-spacing:.12em;color:#fff1b0;text-shadow:0 0 10px #ff9500;opacity:.95;transition:.3s}
+#result{position:absolute;left:50%;top:45%;transform:translate(-50%,-50%) scale(.8);opacity:0;
+ padding:20px 34px;border:2px solid #ffc53d;border-radius:16px;background:rgba(5,3,2,.94);
+ box-shadow:0 0 30px #ff8d00, inset 0 0 25px rgba(255,177,0,.18);text-align:center;transition:.35s;min-width:280px}
+#result.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#result .small{font-size:13px;letter-spacing:.18em;color:#ffd46a;font-weight:800}
+#result .big{font-size:clamp(25px,3vw,48px);font-weight:1000;margin-top:8px;color:#fff}
+#touchZone{position:absolute;left:50%;top:17%;transform:translateX(-50%);width:62%;height:13%;z-index:12}
+#ballCursor{position:absolute;z-index:13;width:28px;height:28px;border-radius:50%;display:none;
+ background:radial-gradient(circle at 32% 28%,#fff,#f7f7f7 25%,#aeb5bd 67%,#626870);
+ box-shadow:0 0 0 2px rgba(255,255,255,.45),0 0 18px rgba(255,255,255,.5);pointer-events:none}
+.prizes{position:absolute;left:50%;bottom:2.2%;transform:translateX(-50%);width:min(66vw,1180px);
+ height:9%;display:grid;grid-template-columns:repeat(13,1fr);z-index:10;gap:2px}
+.prize{position:relative;display:flex;align-items:flex-end;justify-content:center;padding:0 2px 9px;
+ border-radius:7px 7px 2px 2px;border:1px solid #090909;overflow:hidden;
+ background:linear-gradient(180deg,#ed1e32 0,#d10d20 100%);box-shadow:0 0 12px rgba(255,30,40,.3),inset 0 0 10px rgba(255,255,255,.08)}
+.prize:nth-child(even){background:linear-gradient(180deg,#f39a2e,#d86d12)}
+.prize:nth-child(7),.prize:nth-child(8),.prize:nth-child(9),.prize:nth-child(10){background:linear-gradient(180deg,#f39b28,#c9680c)}
+.prize b{font-size:clamp(8px,.72vw,14px);line-height:1.05;text-align:center;color:#fff;text-shadow:0 1px 2px #000;word-break:break-word}
+.floor{position:absolute;bottom:0;left:0;right:0;height:2.2%;z-index:4;background:linear-gradient(#160c08,#020202);
+ box-shadow:0 -5px 25px rgba(255,125,0,.14)}
+@media(max-width:800px){
+ .header{top:2%;width:70%}.title{font-size:10vw}.subtitle{font-size:2.5vw}
+ .side{display:none}.boardWrap{top:18%;width:88vw;height:70%}.prizes{width:88vw;height:10%;bottom:1.5%}
+ #touchZone{top:19%;width:82%;height:12%}
+}
 </style>
 </head>
 <body>
-<canvas id="game"></canvas>
-<div id="hint">TOQUE · ARRASTE · SOLTE</div>
-<div id="result"><div class="small">Prêmio</div><div class="big" id="resultText"></div></div>
-
-<script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
+<div id="stage">
+ <div class="curtain l"></div><div class="curtain r"></div>
+ <div class="marquee"></div>
+ <div class="header"><div class="title" id="title"></div><div class="subtitle">SOLTE A BOLA E DESCUBRA SEU PRÊMIO</div></div>
+ <div class="side left">GRANDES<br>PRÊMIOS<br>GRANDES<br>EMOÇÕES</div>
+ <div class="side right">SUA<br>SORTE<br>PODE<br>BRILHAR<br>AGORA</div>
+ <div id="hint">TOQUE • ARRASTE • SOLTE</div>
+ <div class="boardWrap"><div class="boardGlow"></div><canvas id="game"></canvas></div>
+ <div id="touchZone"></div><div id="ballCursor"></div>
+ <div id="result"><div class="small">SEU PRÊMIO</div><div class="big" id="resultText"></div></div>
+ <div class="prizes" id="prizes"></div>
+ <div class="floor"></div>
+</div>
 <script>
-(() => {
-  const {Engine, World, Bodies, Body, Events} = Matter;
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  const hint = document.getElementById('hint');
-  const result = document.getElementById('result');
-  const resultText = document.getElementById('resultText');
+const title="PLINKO", titleEl=document.getElementById("title");
+[...title].forEach(c=>{let s=document.createElement("span");s.textContent=c;titleEl.appendChild(s)});
+const prizeNames=[
+"R$ 100 FICHAS","R$ 200 FICHAS","R$ 500 FICHAS","R$ 1.000 FICHAS","R$ 2.000 FICHAS","R$ 5.000 FICHAS",
+"iPad","iPhone 17 Pro Max","Bicicleta Elétrica","Barra de Ouro","10 CUPONS CARRO","15 CUPONS CARRO","20 CUPONS CARRO"
+];
+const prizes=document.getElementById("prizes");
+prizeNames.forEach((p,i)=>{const d=document.createElement("div");d.className="prize";d.innerHTML="<b>"+p+"</b>";prizes.appendChild(d)});
 
-  // Ordem dos resultados, da esquerda para a direita.
-  const PRIZES = [
-    'R$ 1.000', 'R$ 500', 'R$ 200', 'R$ 100',
-    '20 CUPONS', '15 CUPONS', '10 CUPONS',
-    'R$ 100', '10 CUPONS', '15 CUPONS', '20 CUPONS',
-    'R$ 100', 'R$ 200', 'R$ 500', 'R$ 1.000'
-  ];
-
-  const engine = Engine.create({enableSleeping:false});
-  engine.gravity.y = 1.18;
-  engine.positionIterations = 10;
-  engine.velocityIterations = 8;
-  engine.constraintIterations = 4;
-
-  let W=0,H=0,dpr=1;
-  let boardLeft=0, boardRight=0, boardTop=0, boardBottom=0;
-  let slotY=0, slotH=0, slotW=0;
-  let pegs=[];
-  let separators=[];
-  let ball=null;
-  let ballReleased=false;
-  let dragging=false;
-  let pointerX=0;
-  let roundLocked=false;
-  let lastTime=performance.now();
-  let settleTimer=null;
-
-  const palette = {
-    bg:'#07131d', peg:'#f2f2f2', pegGlow:'rgba(255,255,255,.16)',
-    red:'#ef3340', gold:'#e8b84e', orange:'#ef9c3a', dark:'#0b1118',
-    slotText:'#101419'
-  };
-
-  function clearWorld(){
-    World.clear(engine.world, false);
-    pegs=[]; separators=[]; ball=null; ballReleased=false; dragging=false;
-  }
-
-  function resize(){
-    const rect=canvas.getBoundingClientRect();
-    W=rect.width; H=rect.height; dpr=Math.min(window.devicePixelRatio||1,2);
-    canvas.width=Math.max(1,Math.floor(W*dpr));
-    canvas.height=Math.max(1,Math.floor(H*dpr));
-    ctx.setTransform(dpr,0,0,dpr,0,0);
-
-    clearWorld();
-
-    // Board occupies almost the entire screen; intentionally minimal UI.
-    const side=Math.min(W*.055,72);
-    boardLeft=side;
-    boardRight=W-side;
-    boardTop=Math.max(56,H*.055);
-    boardBottom=H-Math.max(105,H*.13);
-
-    const boardW=boardRight-boardLeft;
-    slotW=boardW/PRIZES.length;
-    slotY=boardBottom+10;
-    slotH=Math.max(72,H-slotY-18);
-
-    buildBoard();
-  }
-
-  function buildBoard(){
-    const boardW=boardRight-boardLeft;
-    const cx=(boardLeft+boardRight)/2;
-
-    // Invisible side walls.
-    World.add(engine.world, [
-      Bodies.rectangle(boardLeft-16,(boardTop+boardBottom)/2,32,boardBottom-boardTop+160,
-        {isStatic:true,label:'wall'}),
-      Bodies.rectangle(boardRight+16,(boardTop+boardBottom)/2,32,boardBottom-boardTop+160,
-        {isStatic:true,label:'wall'})
-    ]);
-
-    // Peg field. Each row alternates by half a spacing so the ball always
-    // has multiple natural collision paths.
-    const rows=12;
-    const spacingX=Math.min(slotW*.72,52);
-    const spacingY=Math.min((boardBottom-boardTop)*.078,52);
-    const firstY=boardTop+70;
-
-    for(let r=0;r<rows;r++){
-      const y=firstY+r*spacingY;
-      const offset=(r%2 ? spacingX/2 : 0);
-      const usable=boardW-26;
-      const count=Math.floor(usable/spacingX)+1;
-      const start=cx-(count-1)*spacingX/2+offset;
-
-      for(let i=0;i<count;i++){
-        const x=start+i*spacingX;
-        if(x>boardLeft+15 && x<boardRight-15 && y<boardBottom-45){
-          const peg=Bodies.circle(x,y,5.6,{
-            isStatic:true,
-            restitution:.42,
-            friction:.04,
-            label:'peg'
-          });
-          pegs.push(peg);
-        }
-      }
-    }
-    World.add(engine.world,pegs);
-
-    // Bottom funnels: slightly sloped guides before the bins.
-    const funnelY=boardBottom-18;
-    const guideH=10;
-    const guideAngle=Math.PI/8;
-    const guideLen=Math.min(90,slotW*1.45);
-    for(let i=0;i<PRIZES.length-1;i++){
-      const x=boardLeft+slotW*(i+1);
-      const left=Bodies.rectangle(x-guideLen*.32,funnelY,guideLen,guideH,
-        {isStatic:true,angle:guideAngle,label:'guide'});
-      const right=Bodies.rectangle(x+guideLen*.32,funnelY,guideLen,guideH,
-        {isStatic:true,angle:-guideAngle,label:'guide'});
-      // Only use the pair when it stays in its local region; these are
-      // shallow visual/physical funnels and don't seal the bins.
-      World.add(engine.world,[left,right]);
-    }
-
-    // Bin separators. The actual prize is determined by the bin in which
-    // the ball crosses the scoring line.
-    const sepTop=boardBottom+2;
-    const sepBottom=H+30;
-    for(let i=0;i<=PRIZES.length;i++){
-      const x=boardLeft+i*slotW;
-      const wall=Bodies.rectangle(x, (sepTop+sepBottom)/2, 5, sepBottom-sepTop,
-        {isStatic:true,label:'separator'});
-      separators.push(wall);
-    }
-    World.add(engine.world,separators);
-
-    // Floor below the bins.
-    World.add(engine.world,Bodies.rectangle((boardLeft+boardRight)/2,H+18,boardW+20,36,
-      {isStatic:true,label:'floor'}));
-  }
-
-  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
-
-  function makeBall(x){
-    if(roundLocked || ball) return;
-    const y=boardTop+22;
-    ball=Bodies.circle(x,y,5.8,{
-
-      restitution:.38,
-      friction:.018,
-      frictionAir:.0022,
-      density:.0022,
-      label:'ball',
-      sleepThreshold:Infinity
-    });
-    Body.setVelocity(ball,{x:0,y:0});
-    World.add(engine.world,ball);
-  }
-
-  function releaseBall(){
-    if(!ball || ballReleased || roundLocked) return;
-    ballReleased=true;
-    dragging=false;
-    hint.style.opacity='.12';
-
-    // Tiny, deterministic-free nudge only to prevent a perfectly vertical
-    // deadlock. The physics engine decides every subsequent collision.
-    Body.setVelocity(ball,{x:(Math.random()-.5)*.22,y:.35});
-    Body.setAngularVelocity(ball,(Math.random()-.5)*.04);
-  }
-
-  function pointerPos(e){
-    const r=canvas.getBoundingClientRect();
-    return {x:e.clientX-r.left,y:e.clientY-r.top};
-  }
-
-  canvas.addEventListener('pointerdown',e=>{
-    if(roundLocked) return;
-    e.preventDefault();
-    canvas.setPointerCapture?.(e.pointerId);
-    const p=pointerPos(e);
-    pointerX=clamp(p.x,boardLeft+15,boardRight-15);
-
-    if(!ball) makeBall(pointerX);
-    if(ball && !ballReleased){
-      dragging=true;
-      Body.setPosition(ball,{x:pointerX,y:boardTop+22});
-      Body.setVelocity(ball,{x:0,y:0});
-    }
-  },{passive:false});
-
-  canvas.addEventListener('pointermove',e=>{
-    if(!dragging || !ball || ballReleased || roundLocked) return;
-    e.preventDefault();
-    const p=pointerPos(e);
-    pointerX=clamp(p.x,boardLeft+15,boardRight-15);
-    Body.setPosition(ball,{x:pointerX,y:boardTop+22});
-    Body.setVelocity(ball,{x:0,y:0});
-  },{passive:false});
-
-  function pointerup(e){
-    if(!dragging) return;
-    e.preventDefault();
-    releaseBall();
-  }
-  canvas.addEventListener('pointerup',pointerup,{passive:false});
-  canvas.addEventListener('pointercancel',pointerup,{passive:false});
-
-  // If the ball crosses the scoring line, lock in the actual bin.
-  Events.on(engine,'afterUpdate',()=>{
-    if(!ball || !ballReleased) return;
-
-    if(ball.position.y > boardBottom+18 && !roundLocked){
-      const idx=clamp(Math.floor((ball.position.x-boardLeft)/slotW),0,PRIZES.length-1);
-      // Don't award until the ball has actually settled into the bin.
-      if(ball.position.y > H-28 || (Math.abs(ball.velocity.y)<.18 && ball.position.y>boardBottom+28)){ 
-        finishRound(idx);
-      }
-    }
-
-    // Safety: if physics sends it outside the board, reset without changing
-    // the visual outcome.
-    if(ball.position.y>H+100){
-      const idx=clamp(Math.floor((ball.position.x-boardLeft)/slotW),0,PRIZES.length-1);
-      finishRound(idx);
-    }
-  });
-
-  function finishRound(idx){
-    if(roundLocked) return;
-    roundLocked=true;
-    const prize=PRIZES[idx];
-    resultText.textContent=prize;
-    result.classList.add('show');
-
-    clearTimeout(settleTimer);
-    settleTimer=setTimeout(()=>{
-      result.classList.remove('show');
-      roundLocked=false;
-      World.remove(engine.world,ball);
-      ball=null;
-      ballReleased=false;
-      hint.style.opacity='.8';
-    },1800);
-  }
-
-  function drawBackground(){
-    const g=ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0,'#091722');
-    g.addColorStop(.6,'#07131d');
-    g.addColorStop(1,'#050d14');
-    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
-
-    // Very subtle vignette; no decorative UI.
-    const vg=ctx.createRadialGradient(W/2,H*.42,Math.min(W,H)*.08,W/2,H*.42,Math.max(W,H)*.72);
-    vg.addColorStop(0,'rgba(255,255,255,.035)');
-    vg.addColorStop(1,'rgba(0,0,0,.35)');
-    ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
-  }
-
-  function drawPegs(){
-    for(const p of pegs){
-      ctx.beginPath();ctx.arc(p.position.x,p.position.y,10,0,Math.PI*2);
-      ctx.fillStyle=palette.pegGlow;ctx.fill();
-      ctx.beginPath();ctx.arc(p.position.x,p.position.y,5.6,0,Math.PI*2);
-      ctx.fillStyle=palette.peg;ctx.fill();
-    }
-  }
-
-  function roundRect(x,y,w,h,r){
-    const rr=Math.min(r,w/2,h/2);
-    ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);
-    ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
-  }
-
-  function drawSlots(){
-    const y=slotY+4, h=slotH-7;
-    for(let i=0;i<PRIZES.length;i++){
-      const x=boardLeft+i*slotW+2;
-      const w=slotW-4;
-      const hot=(i===Math.floor(PRIZES.length/2));
-      ctx.fillStyle=hot?'#efb044':(i%2?'#ef8f35':'#e93340');
-      roundRect(x,y,w,h,7);ctx.fill();
-
-      ctx.fillStyle='rgba(0,0,0,.18)';
-      ctx.fillRect(x,y+h-6,w,6);
-
-      ctx.fillStyle=palette.slotText;
-      ctx.font=`900 ${Math.max(11,Math.min(18,slotW*.22))}px Arial`;
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      const lines=PRIZES[i].split(' ');
-      let label=PRIZES[i];
-      if(slotW<72 && PRIZES[i].includes('CUPONS')){
-        label=PRIZES[i].replace(' CUPONS','');
-      }
-      ctx.fillText(label,x+w/2,y+h/2);
-    }
-  }
-
-  function drawBall(){
-    if(!ball)return;
-    const x=ball.position.x,y=ball.position.y;
-    const rg=ctx.createRadialGradient(x-2,y-2.5,0.5,x,y,6.2);
-    rg.addColorStop(0,'#ffffff');rg.addColorStop(.35,'#d9dde0');rg.addColorStop(1,'#70777c');
-    ctx.beginPath();ctx.arc(x,y,5.8,0,Math.PI*2);ctx.fillStyle=rg;ctx.fill();
-    ctx.beginPath();ctx.arc(x-1.7,y-2,1.5,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fill();
-  }
-
-  function drawReleaseBall(){
-    if(ballReleased || !ball) return;
-    const x=ball.position.x,y=boardTop+22;
-    ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fillStyle='rgba(239,51,64,.12)';ctx.fill();
-    ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=palette.red;ctx.fill();
-  }
-
-  function render(){
-    drawBackground();
-    drawPegs();
-    drawSlots();
-    drawReleaseBall();
-    drawBall();
-  }
-
-  function loop(t){
-    const dt=Math.min(33,t-lastTime);lastTime=t;
-    if(!roundLocked) Engine.update(engine,dt);
-    render();
-    requestAnimationFrame(loop);
-  }
-
-  window.addEventListener('resize',resize);
-  resize();
-  requestAnimationFrame(loop);
-})();
+const canvas=document.getElementById("game"),ctx=canvas.getContext("2d"),wrap=document.querySelector(".boardWrap");
+let W,H,dpr,pegs=[],ball=null,running=false,drag=false,last=0,raf=0,selectedX=null;
+const rows=13, cols=14;
+function resize(){
+ dpr=Math.min(devicePixelRatio||1,2); W=wrap.clientWidth; H=wrap.clientHeight;
+ canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+"px";canvas.style.height=H+"px";ctx.setTransform(dpr,0,0,dpr,0,0);
+ buildPegs(); draw();
+}
+function buildPegs(){
+ pegs=[]; 
+ const top=H*.105, bottom=H*.73;
+ const dy=(bottom-top)/(rows-1);
+ const center=W*.5;
+ const dx=Math.min(W/(cols+3),W*.055);
+ for(let r=0;r<rows;r++){
+   const n= r%2===0 ? cols : cols-1;
+   const rowWidth=(n-1)*dx;
+   const x0=center-rowWidth/2;
+   for(let c=0;c<n;c++) pegs.push({x:x0+c*dx,y:top+r*dy,r:Math.max(3.8,dx*.105)});
+ }
+}
+function drawBoard(){
+ ctx.clearRect(0,0,W,H);
+ // triangular dark board
+ const topX=W*.29, botX=W*.03, rightBot=W*.97, rightTop=W*.71, topY=H*.055, botY=H*.83;
+ const g=ctx.createLinearGradient(0,0,0,H);g.addColorStop(0,"#15120d");g.addColorStop(.55,"#080807");g.addColorStop(1,"#030303");
+ ctx.beginPath();ctx.moveTo(topX,topY);ctx.lineTo(rightTop,topY);ctx.lineTo(rightBot,botY);ctx.lineTo(botX,botY);ctx.closePath();ctx.fillStyle=g;ctx.fill();
+ // gold frame
+ ctx.save();ctx.lineWidth=Math.max(8,W*.008);ctx.strokeStyle="#9a5b0a";ctx.shadowColor="#ffae22";ctx.shadowBlur=18;ctx.stroke();
+ ctx.lineWidth=Math.max(3,W*.003);ctx.strokeStyle="#ffd35a";ctx.shadowBlur=7;ctx.stroke();ctx.restore();
+ // marquee bulbs on frame
+ for(let t=.04;t<.97;t+=.055){
+   const y=topY+(botY-topY)*t;
+   const xl=topX+(botX-topX)*t, xr=rightTop+(rightBot-rightTop)*t;
+   bulb(xl,y);bulb(xr,y);
+ }
+ for(let x=topX+.04*(rightTop-topX);x<rightTop;x+=W*.055)bulb(x,topY);
+}
+function bulb(x,y){
+ ctx.beginPath();ctx.arc(x,y,Math.max(2.5,W*.0022),0,Math.PI*2);ctx.fillStyle="#fff3b0";ctx.shadowColor="#ffad18";ctx.shadowBlur=10;ctx.fill();ctx.shadowBlur=0;
+}
+function drawPegs(){
+ pegs.forEach(p=>{
+   ctx.beginPath();ctx.arc(p.x,p.y,p.r+4,0,Math.PI*2);ctx.fillStyle="rgba(255,164,24,.08)";ctx.fill();
+   ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+   const g=ctx.createRadialGradient(p.x-p.r*.35,p.y-p.r*.4,1,p.x,p.y,p.r);
+   g.addColorStop(0,"#fff4bd");g.addColorStop(.32,"#ffd24f");g.addColorStop(1,"#9a5200");
+   ctx.fillStyle=g;ctx.shadowColor="#ffb41e";ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
+ });
+}
+function drawBall(){
+ if(!ball)return;
+ const r=ball.r;
+ const g=ctx.createRadialGradient(ball.x-r*.35,ball.y-r*.4,1,ball.x,ball.y,r*1.2);
+ g.addColorStop(0,"#fff");g.addColorStop(.25,"#f6f6f6");g.addColorStop(.65,"#aeb5bc");g.addColorStop(1,"#5c6269");
+ ctx.beginPath();ctx.arc(ball.x,ball.y,r,0,Math.PI*2);ctx.fillStyle=g;ctx.shadowColor="#fff";ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;
+}
+function draw(){drawBoard();drawPegs();drawBall()}
+function pointFromEvent(e){
+ const rect=canvas.getBoundingClientRect(), t=e.touches?e.touches[0]:e;
+ return {x:t.clientX-rect.left,y:t.clientY-rect.top};
+}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+function startBall(x){
+ ball={x:clamp(x,W*.27,W*.73),y:H*.075,r:Math.max(6,Math.min(10,W*.012)),vx:0,vy:0,alive:true};
+ selectedX=ball.x; drag=true; document.getElementById("ballCursor").style.display="block"; updateCursor();
+}
+function updateCursor(){
+ if(!ball)return;const z=document.getElementById("ballCursor");z.style.left=(wrap.offsetLeft+ball.x-14)+"px";z.style.top=(wrap.offsetTop+ball.y-14)+"px";
+}
+function release(){
+ if(!ball||!drag)return;drag=false;document.getElementById("ballCursor").style.display="none";
+ ball.vy=40;ball.vx=(Math.random()-.5)*15;running=true;last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
+ document.getElementById("hint").textContent="A BOLA ESTÁ DESCENDO...";
+}
+function loop(t){
+ const dt=Math.min((t-last)/1000,.022);last=t;
+ step(dt);draw();
+ if(running)raf=requestAnimationFrame(loop);else finish();
+}
+function step(dt){
+ if(!ball)return;
+ ball.vy += 620*dt; ball.x += ball.vx*dt; ball.y += ball.vy*dt;
+ // keep ball inside the triangular chamber
+ const topY=H*.055, botY=H*.83, u=(ball.y-topY)/(botY-topY);
+ const left=W*.29+(W*.03-W*.29)*u, right=W*.71+(W*.97-W*.71)*u;
+ const pad=ball.r+3;
+ if(ball.x<left+pad){ball.x=left+pad;ball.vx=Math.abs(ball.vx)*.72}
+ if(ball.x>right-pad){ball.x=right-pad;ball.vx=-Math.abs(ball.vx)*.72}
+ // peg collisions
+ for(const p of pegs){
+   let dx=ball.x-p.x,dy=ball.y-p.y,dist=Math.hypot(dx,dy),min=ball.r+p.r;
+   if(dist<min && dist>0){
+     const nx=dx/dist,ny=dy/dist;
+     ball.x=p.x+nx*(min+.25);ball.y=p.y+ny*(min+.25);
+     const vn=ball.vx*nx+ball.vy*ny;
+     if(vn<0){
+       ball.vx-=1.72*vn*nx;ball.vy-=1.72*vn*ny;
+       ball.vx*=.985;ball.vy*=.985;
+       // small natural lateral randomness, not target-directed
+       ball.vx += (Math.random()-.5)*18;
+     }
+   }
+ }
+ // tiny air drag
+ ball.vx*=Math.pow(.996,dt*60);
+ // bottom
+ if(ball.y>H*.845){
+   ball.y=H*.845;
+   ball.vy=0;ball.vx*=.7;
+   // let it settle in the actual x position
+   if(Math.abs(ball.vx)<8){running=false}
+ }
+}
+function finish(){
+ if(!ball)return;
+ const idx=clamp(Math.floor((ball.x/(W))*13),0,12);
+ document.getElementById("resultText").textContent=prizeNames[idx];
+ document.getElementById("result").classList.add("show");
+ document.getElementById("hint").textContent="TOQUE NA BOLA PARA JOGAR NOVAMENTE";
+ setTimeout(()=>{document.getElementById("result").classList.remove("show");ball=null;draw();},2600);
+}
+function pointerDown(e){
+ e.preventDefault();
+ if(running)return;
+ const p=pointFromEvent(e);
+ // start anywhere in the upper entry zone, then choose horizontal release
+ if(p.y< H*.25){startBall(p.x)}
+}
+function pointerMove(e){
+ if(!drag||!ball)return;e.preventDefault();const p=pointFromEvent(e);
+ ball.x=clamp(p.x,W*.27,W*.73);ball.y=H*.075;ball.vx=0;ball.vy=0;selectedX=ball.x;updateCursor();draw();
+}
+function pointerUp(e){if(drag){e.preventDefault();release()}}
+canvas.addEventListener("touchstart",pointerDown,{passive:false});
+canvas.addEventListener("touchmove",pointerMove,{passive:false});
+canvas.addEventListener("touchend",pointerUp,{passive:false});
+canvas.addEventListener("mousedown",pointerDown);window.addEventListener("mousemove",pointerMove);window.addEventListener("mouseup",pointerUp);
+window.addEventListener("resize",resize);
+resize();
 </script>
 </body>
 </html>
