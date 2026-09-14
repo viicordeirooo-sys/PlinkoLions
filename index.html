@@ -59,7 +59,6 @@ const prizeData=[
  ['15','CUPONS CARRO','car','#4b0808','#ff3b35','▰'],
  ['20','CUPONS CARRO','car','#4b0808','#ff3b35','▰']
 ];
-document.getElementById('lights').innerHTML='';
 for(const side of [document.querySelector('.lights.l'),document.querySelector('.lights.r')]) for(let i=0;i<5;i++){const s=document.createElement('i');side.appendChild(s)}
 const prizeBox=document.getElementById('prizes');
 prizeData.forEach((p,i)=>{const d=document.createElement('div');d.className='prize';d.style.setProperty('--c1',p[3]);d.style.setProperty('--c2',p[4]);d.innerHTML=`<div class="icon ${p[2]}">${p[5]}</div><div class="label">${p[0]}<br>${p[1]}</div>`;prizeBox.appendChild(d)});
@@ -151,7 +150,9 @@ function step(){
    }
   }
   const floor=H*.755;
-  if(ball.y>floor){ball.y=floor;ball.vy*=.25;if(Math.abs(ball.vy)<.8){running=false;ball.x=targetX(targetBin);ball.y=floor}}
+  if(ball.y>floor){ball.y=floor;ball.vy*=.25;if(Math.abs(ball.vy)<.8){running=false;ball.x=targetX(targetBin);ball.y=floor;
+    if(Array.isArray(cfg.stock)&&cfg.stock[targetBin]!==undefined&&Number.isFinite(+cfg.stock[targetBin])&&+cfg.stock[targetBin]>0){cfg.stock[targetBin]=Math.max(0,+cfg.stock[targetBin]-1);localStorage.setItem('plinko_cfg',JSON.stringify(cfg));}
+  }}
  }
  requestAnimationFrame(step);
 }
