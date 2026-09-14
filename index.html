@@ -14,11 +14,6 @@ linear-gradient(180deg,#070605 0%,#0b0805 55%,#030303 100%)}
 linear-gradient(90deg,rgba(255,170,48,.16),transparent 16%,transparent 84%,rgba(255,170,48,.16)),
 radial-gradient(circle at 8% 25%,rgba(255,182,58,.22),transparent 10%),
 radial-gradient(circle at 92% 25%,rgba(255,182,58,.22),transparent 10%);pointer-events:none}
-.curtain{position:absolute;top:-3%;width:15%;height:110%;background:
-linear-gradient(90deg,#130103 0%,#5e0613 23%,#ad1020 42%,#4b0410 61%,#100103 100%);
-filter:drop-shadow(0 0 18px rgba(255,25,35,.18));z-index:1}
-.curtain.left{left:-2%;clip-path:polygon(0 0,100% 0,78% 100%,0 100%)}.curtain.right{right:-2%;transform:scaleX(-1);clip-path:polygon(0 0,100% 0,78% 100%,0 100%)}
-.curtain:after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 9%,rgba(255,90,70,.18) 10% 12%,transparent 13% 23%)}
 .sideLight{position:absolute;top:0;width:16%;height:30%;z-index:2;opacity:.95}
 .sideLight.left{left:2%;background:radial-gradient(circle at 20% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 35% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 50% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 65% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 80% 25%,#ffd16a 0 2%,transparent 3%)}
 .sideLight.right{right:2%;background:radial-gradient(circle at 20% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 35% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 50% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 65% 25%,#ffd16a 0 2%,transparent 3%),radial-gradient(circle at 80% 25%,#ffd16a 0 2%,transparent 3%)}
@@ -32,12 +27,11 @@ filter:drop-shadow(0 0 18px rgba(255,25,35,.18));z-index:1}
 .hint{position:absolute;z-index:8;bottom:1.1%;left:50%;transform:translateX(-50%);font-size:clamp(10px,.8vw,14px);color:#c9b18a;letter-spacing:1px;text-transform:uppercase;opacity:.9}
 .result{position:absolute;z-index:20;left:50%;top:43%;transform:translate(-50%,-50%) scale(.96);min-width:min(520px,80vw);padding:26px 34px;border:2px solid #f2bd45;border-radius:18px;background:linear-gradient(180deg,rgba(22,13,5,.97),rgba(3,3,3,.98));box-shadow:0 0 50px rgba(255,174,45,.4),inset 0 0 30px rgba(255,174,45,.08);text-align:center;opacity:0;pointer-events:none;transition:.25s}
 .result.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.result small{color:#d6b47b;text-transform:uppercase;letter-spacing:2px}.result strong{display:block;margin-top:8px;font-size:clamp(28px,3vw,48px);color:#ffd45b}.again{margin-top:18px;border:1px solid #d9a83e;background:#120b03;color:#ffe5a5;border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer}
-@media(max-aspect-ratio:1/1){.sideText{display:none}.header{top:1%;width:100%}.title{font-size:42px}.subtitle{font-size:11px;margin-top:5px}.curtain{width:8%}.hint{display:none}}
+@media(max-aspect-ratio:1/1){.sideText{display:none}.header{top:1%;width:100%}.title{font-size:42px}.subtitle{font-size:11px;margin-top:5px}.hint{display:none}}
 </style>
 </head>
 <body>
 <div class="stage">
-  <div class="curtain left"></div><div class="curtain right"></div>
   <div class="sideLight left"></div><div class="sideLight right"></div>
   <div class="header"><div class="title"><span>PLINKO</span></div><div class="subtitle">SOLTE A BOLA E DESCUBRA SEU PRÊMIO</div></div>
   <div class="sideText l">GRANDES<br>PRÊMIOS<br>GRANDES<br>EMOÇÕES</div>
@@ -77,6 +71,9 @@ function resize(){
   canvas.style.width='100vw'; canvas.style.height='100vh'; canvas.style.transform='none';
   ctx.setTransform(dpr,0,0,dpr,0,0);
   build();
+  if(!running && !drag){
+    ball={x:W/2,y:mobile?H*.285:222,vx:0,vy:0,r:mobile?Math.max(7,W*.018):12,tx:W/2};
+  }
 }
 function sx(v){return mobile?v*W/390:v*W/1536}
 function sy(v){return mobile?v*H/844:v*H/864}
@@ -111,8 +108,6 @@ function drawPegs(){
    ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,Math.PI*2);ctx.fillStyle=g;ctx.shadowColor='#ffb52b';ctx.shadowBlur=8;ctx.fill();ctx.shadowBlur=0;
  }
 }
-function drawArrows(){const m=mobile;for(const x of (m?[W/2-W*.18,W/2,W/2+W*.18]:[W/2-92,W/2,W/2+92])){ctx.save();ctx.strokeStyle='#ff3434';ctx.lineWidth=m?Math.max(3,W*.009):5;ctx.shadowColor='#ff2020';ctx.shadowBlur=m?10:18;const y=m?H*.34:176,a=m?W*.055:22,b=m?W*.11:44;ctx.beginPath();ctx.moveTo(x-a,y);ctx.lineTo(x,y+b);ctx.lineTo(x+a,y);ctx.stroke();ctx.beginPath();ctx.moveTo(x-a,y+10);ctx.lineTo(x,y+b+10);ctx.lineTo(x+a,y+10);ctx.stroke();ctx.restore();}}
-
 function drawPrizeIcon(p,x,y,w,h){
  ctx.save();ctx.translate(x,y);const u=mobile?.55:1;ctx.scale(u,u);ctx.shadowColor=p.color;ctx.shadowBlur=mobile?10:18;
  ctx.fillStyle=p.color;ctx.strokeStyle='#fff0a5';ctx.lineWidth=1.2;
@@ -137,7 +132,7 @@ function drawBall(){
  ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,7);ctx.fillStyle=g;ctx.shadowColor='#fff';ctx.shadowBlur=12;ctx.fill();ctx.shadowBlur=0;
 }
 function render(){
- ctx.clearRect(0,0,W,H);drawFrame();drawArrows();drawPegs();drawBins();drawBall();
+ ctx.clearRect(0,0,W,H);drawFrame();drawPegs();drawBins();drawBall();
  requestAnimationFrame(render);
 }
 function getPointer(e){const r=canvas.getBoundingClientRect();return {x:(e.clientX-r.left)*(W/r.width),y:(e.clientY-r.top)*(H/r.height)}}
@@ -147,7 +142,12 @@ function weightedTarget(){
  let r=Math.random()*sum;for(let i=0;i<available.length;i++){r-=available[i];if(r<=0)return i}return 0;
 }
 function targetX(bin){const left=mobile?0:170,right=mobile?W:1366;return left+(bin+.5)*(right-left)/prizes.length}
-function startBall(x){targetBin=weightedTarget();const tx=targetX(targetBin);ball={x:Math.max(mobile?W*.08:260,Math.min(mobile?W*.92:1276,x)),y:mobile?H*.285:222,vx:0,vy:1.2,r:mobile?Math.max(7,W*.018):12,tx};running=true;result.classList.remove('show');}
+function startBall(x){
+  targetBin=weightedTarget();
+  const tx=targetX(targetBin);
+  ball={x:Math.max(mobile?W*.08:260,Math.min(mobile?W*.92:1276,x)),y:mobile?H*.285:222,vx:0,vy:1.2,r:mobile?Math.max(7,W*.018):12,tx};
+  running=true;result.classList.remove('show');
+}
 
 function physics(dt){
  if(!running||!ball)return;
@@ -171,9 +171,27 @@ function physics(dt){
  }
 }
 function finish(){running=false;ball.x=targetX(targetBin);ball.y=mobile?H*.785:653; if(Array.isArray(cfg.stock) && cfg.stock[targetBin] !== undefined && cfg.stock[targetBin] > 0){cfg.stock[targetBin]--;localStorage.setItem('plinko_cfg',JSON.stringify(cfg));} resultName.textContent=prizes[targetBin].name;result.classList.add('show')}
-canvas.addEventListener('pointerdown',e=>{if(running)return;const p=getPointer(e);if(p.y>(mobile?H*.33:245)||p.y<(mobile?H*.25:180))return;canvas.setPointerCapture(e.pointerId);drag=true;ball={x:Math.max(mobile?W*.08:250,Math.min(mobile?W*.92:1286,p.x)),y:mobile?H*.285:222,vx:0,vy:0,r:mobile?Math.max(7,W*.018):12};});
-canvas.addEventListener('pointermove',e=>{if(!drag||running)return;const p=getPointer(e);ball.x=Math.max(mobile?W*.08:245,Math.min(mobile?W*.92:1291,p.x));});
-canvas.addEventListener('pointerup',e=>{if(!drag||running)return;drag=false;startBall(ball.x)});
+canvas.addEventListener('pointerdown',e=>{
+  if(running)return;
+  const p=getPointer(e);
+  const laneY=mobile?H*.285:222;
+  // Only the horizontal launch lane controls the ball. Vertical dragging is ignored.
+  if(Math.abs(p.y-laneY)>(mobile?H*.07:55))return;
+  canvas.setPointerCapture(e.pointerId);drag=true;
+  ball={x:Math.max(mobile?W*.08:250,Math.min(mobile?W*.92:1286,p.x)),y:laneY,vx:0,vy:0,r:mobile?Math.max(7,W*.018):12,tx:p.x};
+});
+canvas.addEventListener('pointermove',e=>{
+  if(!drag||running)return;
+  const p=getPointer(e);
+  const laneY=mobile?H*.285:222;
+  ball.x=Math.max(mobile?W*.08:245,Math.min(mobile?W*.92:1291,p.x));
+  ball.y=laneY;
+});
+canvas.addEventListener('pointerup',e=>{
+  if(!drag||running)return;
+  drag=false;startBall(ball.x);
+});
+canvas.addEventListener('pointercancel',()=>{if(drag){drag=false;if(ball)ball.x=W/2;}});
 again.onclick=()=>{result.classList.remove('show');ball=null};
 setInterval(()=>{if(running)physics(16)},16);
 resize();addEventListener('resize',resize);render();
