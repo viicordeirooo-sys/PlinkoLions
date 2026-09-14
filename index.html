@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PLINKO — Jogo de Prêmios</title>
+<style>
+:root{
+  --gold:#d9a33d; --gold-hi:#ffe39a; --gold-dark:#6b4310;
+  --red:#c71928; --red-dark:#5e080e; --cream:#f8edd0;
+}
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden}
+body{
+  background:#020202;color:#fff;font-family:Arial,Helvetica,sans-serif;
+}
+#screen{
+  width:100vw;height:100vh;position:relative;overflow:hidden;
+  background:
+    radial-gradient(ellipse at 50% 45%,rgba(100,55,10,.28),transparent 36%),
+    linear-gradient(90deg,rgba(80,0,0,.34),transparent 16%,transparent 84%,rgba(80,0,0,.34)),
+    radial-gradient(ellipse at 50% 100%,#3a2109 0%,#0d0804 34%,#020202 75%);
+}
+#screen:after{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 9% 23%,#ffc85b 0 2px,transparent 3px),
+    radial-gradient(circle at 91% 22%,#ffc85b 0 2px,transparent 3px),
+    radial-gradient(circle at 12% 64%,#ff6d37 0 2px,transparent 3px),
+    radial-gradient(circle at 88% 64%,#ff6d37 0 2px,transparent 3px);
+  opacity:.55;
+}
+.curtain{
+  position:absolute;top:-4%;height:110%;width:19%;
+  background:repeating-linear-gradient(92deg,#100001 0 13px,#4a050a 19px,#170103 33px);
+  box-shadow:0 0 30px #000;z-index:1;
+}
+.curtain.left{left:-5%;transform:skewX(-7deg)}
+.curtain.right{right:-5%;transform:skewX(7deg)}
+
+.header{position:absolute;left:0;right:0;top:2.5vh;text-align:center;z-index:5}
+.title{
+  margin:0;font-size:clamp(50px,6.8vw,112px);line-height:.85;
+  letter-spacing:7px;font-weight:900;color:#f4c65b;
+  text-shadow:0 3px 0 #75450a,0 0 4px #fff0ae,0 0 28px rgba(255,174,37,.45);
+}
+.title:after{
+  content:"";display:block;width:74%;height:4px;margin:1.5vh auto 0;
+  background:linear-gradient(90deg,transparent,var(--gold),transparent);
+  box-shadow:0 0 10px rgba(255,190,60,.55)
+}
+.subtitle{
+  margin-top:1.2vh;font-size:clamp(12px,1.35vw,22px);
+  letter-spacing:7px;color:#f5e8c9;text-transform:uppercase;
+}
+.side{
+  position:absolute;top:1vh;color:#ead8ad;font-size:clamp(10px,1vw,16px);
+  letter-spacing:4px;line-height:1.55;text-transform:uppercase;
+}
+.side.left{left:3%;text-align:left}.side.right{right:3%;text-align:right}
+
+.gameArea{
+  position:absolute;left:50%;top:17.5%;transform:translateX(-50%);
+  width:min(54vw,78vh);height:72%;
+  display:flex;flex-direction:column;align-items:center;z-index:4;
+}
+.boardOuter{
+  position:relative;width:100%;height:calc(100% - 85px);
+  padding:9px;border-radius:27px 27px 12px 12px;
+  background:linear-gradient(135deg,#efc45d 0%,#6b4511 13%,#f0c55e 50%,#6b4511 87%,#e5b64a 100%);
+  box-shadow:0 0 0 3px #120a02,0 0 38px rgba(255,180,40,.22),0 16px 45px #000;
+}
+.board{
+  width:100%;height:100%;position:relative;overflow:hidden;border-radius:19px 19px 7px 7px;
+  background:
+    radial-gradient(ellipse at 50% 0,rgba(255,195,70,.05),transparent 35%),
+    linear-gradient(#10100e,#040404);
+  box-shadow:inset 0 0 60px #000;
+}
+.board .topText{
+  position:absolute;top:2.2%;left:0;right:0;text-align:center;z-index:4;
+  color:#e4d2aa;font-size:clamp(10px,1vw,15px);letter-spacing:4px;
+}
+.dropArrows{
+  position:absolute;top:6.5%;left:0;right:0;display:flex;justify-content:center;gap:11%;z-index:5;
+}
+.dropArrows span{
+  width:42px;height:23px;position:relative;filter:drop-shadow(0 0 7px #ff2634)
+}
+.dropArrows span:before{
+  content:"";position:absolute;left:0;right:0;top:5px;height:6px;background:#ef3340;
+  clip-path:polygon(0 0,100% 0,76% 100%,24% 100%);
+}
+.dropArrows span:after{
+  content:"";position:absolute;left:50%;top:9px;width:3px;height:15px;background:#ef3340;
+  box-shadow:0 0 8px #ff2634;
+}
+#canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3}
+
+.prizeRow{
+  width:100%;height:78px;display:grid;grid-template-columns:repeat(13,1fr);
+  margin-top:4px;z-index:7;
+}
+.prize{
+  border:1px solid rgba(235,184,71,.42);border-top:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  text-align:center;min-width:0;font-weight:800;
+  font-size:clamp(7px,.62vw,12px);line-height:1.02;
+  text-shadow:0 2px 4px #000;
+}
+.prize .ico{font-size:clamp(13px,1.35vw,21px);margin-bottom:3px}
+.cash1{background:linear-gradient(#63131b,#22070a)}
+.cash2{background:linear-gradient(#74121d,#24070b)}
+.cash3{background:linear-gradient(#7b164b,#260718)}
+.cash4{background:linear-gradient(#19387e,#08172f)}
+.cash5{background:linear-gradient(#17587d,#071b2b)}
+.cash6{background:linear-gradient(#126b67,#052420)}
+.ipad{background:linear-gradient(#146043,#061c15)}
+.phone{background:linear-gradient(#62206b,#1c071f)}
+.bike{background:linear-gradient(#80651b,#251b07)}
+.gold{background:linear-gradient(#8a5d12,#281805)}
+.car{background:linear-gradient(#7e111b,#24070a)}
+
+.buttonArea{
+  position:absolute;left:50%;bottom:2.5vh;transform:translateX(-50%);
+  z-index:8;text-align:center;
+}
+#play{
+  min-width:min(430px,42vw);padding:15px 38px;border-radius:16px;
+  border:2px solid #d9a13a;background:linear-gradient(#e0323c,#8d1118);
+  color:#fff;font-size:clamp(14px,1.4vw,22px);font-weight:900;letter-spacing:3px;
+  box-shadow:0 0 0 3px rgba(12,6,1,.9),0 0 28px rgba(218,32,42,.35),inset 0 1px #ff9999;
+  cursor:pointer;
+}
+#play:active{transform:scale(.985)}#play:disabled{opacity:.45;cursor:not-allowed}
+#status{margin-top:7px;color:#c7b894;font-size:11px;letter-spacing:2px;text-transform:uppercase}
+
+.overlay{
+  display:none;position:absolute;inset:0;z-index:50;
+  align-items:center;justify-content:center;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);
+}
+.overlay.show{display:flex}
+.resultCard{
+  width:min(88vw,650px);padding:48px 32px;text-align:center;border-radius:25px;
+  border:2px solid #c99436;
+  background:radial-gradient(circle at 50% 0,#3b250b,#090806 67%);
+  box-shadow:0 0 80px rgba(255,187,49,.25)
+}
+.resultSmall{font-size:13px;letter-spacing:5px;color:#e4c66e}
+.resultCard h2{margin:16px 0 8px;font-size:clamp(38px,6vw,72px);color:#fff0c5}
+.resultCard p{margin:0 0 27px;color:#cfc1a4;font-size:17px}
+#next{
+  padding:14px 30px;border-radius:12px;border:1px solid #c89535;
+  background:#13100b;color:#f2ce72;font-weight:800;letter-spacing:2px;cursor:pointer
+}
+@media(max-aspect-ratio:4/3){
+  .side{display:none}
+  .gameArea{width:72vw;height:68%}
+}
+</style>
+</head>
+<body>
+<div id="screen">
+  <div class="curtain left"></div><div class="curtain right"></div>
+
+  <header class="header">
+    <div class="side left">GRANDES<br>PRÊMIOS<br>GRANDES<br>EMOÇÕES</div>
+    <div class="side right">SUA<br>SORTE<br>PODE<br>BRILHAR<br>AGORA</div>
+    <h1 class="title">PLINKO</h1>
+    <div class="subtitle">SOLTE A BOLA E DESCUBRA SEU PRÊMIO</div>
+  </header>
+
+  <section class="gameArea">
+    <div class="boardOuter">
+      <div class="board">
+        <div class="topText">ESCOLHA ONDE SOLTAR</div>
+        <div class="dropArrows"><span></span><span></span><span></span></div>
+        <canvas id="canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="prizeRow">
+      <div class="prize cash1"><div class="ico">🪙</div>R$ 100<br>FICHAS</div>
+      <div class="prize cash2"><div class="ico">🪙</div>R$ 200<br>FICHAS</div>
+      <div class="prize cash3"><div class="ico">🪙</div>R$ 500<br>FICHAS</div>
+      <div class="prize cash4"><div class="ico">🪙</div>R$ 1.000<br>FICHAS</div>
+      <div class="prize cash5"><div class="ico">🪙</div>R$ 2.000<br>FICHAS</div>
+      <div class="prize cash6"><div class="ico">🪙</div>R$ 5.000<br>FICHAS</div>
+      <div class="prize ipad"><div class="ico">▣</div>iPad</div>
+      <div class="prize phone"><div class="ico">▯</div>iPhone<br>17 Pro Max</div>
+      <div class="prize bike"><div class="ico">🚲</div>Bicicleta<br>Elétrica</div>
+      <div class="prize gold"><div class="ico">▰</div>Barra<br>de Ouro</div>
+      <div class="prize car"><div class="ico">🚗</div>10 CUPONS<br>CARRO</div>
+      <div class="prize car"><div class="ico">🚗</div>15 CUPONS<br>CARRO</div>
+      <div class="prize car"><div class="ico">🚗</div>20 CUPONS<br>CARRO</div>
+    </div>
+  </section>
+
+  <div class="buttonArea">
+    <button id="play">APERTE O BOTÃO<br>PARA SOLTAR A BOLA</button>
+    <div id="status">PRONTO PARA A PRÓXIMA RODADA</div>
+  </div>
+
+  <div class="overlay" id="overlay">
+    <div class="resultCard">
+      <div class="resultSmall">RESULTADO</div>
+      <h2 id="resultTitle"></h2>
+      <p id="resultSub"></p>
+      <button id="next">PRÓXIMA RODADA</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const prizes=[
+  ["R$ 100","FICHAS"],["R$ 200","FICHAS"],["R$ 500","FICHAS"],
+  ["R$ 1.000","FICHAS"],["R$ 2.000","FICHAS"],["R$ 5.000","FICHAS"],
+  ["iPad","PRÊMIO"],["iPhone 17 Pro Max","PRÊMIO"],
+  ["Bicicleta Elétrica","PRÊMIO"],["Barra de Ouro","PRÊMIO"],
+  ["10 CUPONS","CARRO 0 KM"],["15 CUPONS","CARRO 0 KM"],["20 CUPONS","CARRO 0 KM"]
+];
+
+const canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d");
+const board=document.querySelector(".board"),play=document.getElementById("play");
+const status=document.getElementById("status"),overlay=document.getElementById("overlay");
+const resultTitle=document.getElementById("resultTitle"),resultSub=document.getElementById("resultSub");
+const next=document.getElementById("next");
+let W=0,H=0,D=1,pegs=[],ball=null,raf=0,busy=false;
+
+function resize(){
+  const r=board.getBoundingClientRect(); D=devicePixelRatio||1; W=r.width; H=r.height;
+  canvas.width=Math.round(W*D); canvas.height=Math.round(H*D);
+  ctx.setTransform(D,0,0,D,0,0); buildPegs(); draw();
+}
+function buildPegs(){
+  pegs=[];
+  const rows=13, top=92, bottom=H-70;
+  for(let row=0;row<rows;row++){
+    const y=top+(bottom-top)*row/(rows-1);
+    const count=row%2?8:7, span=W*.78, start=(W-span)/2;
+    for(let i=0;i<count;i++) pegs.push({x:start+i*span/(count-1),y});
+  }
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  for(const p of pegs){
+    ctx.beginPath();ctx.arc(p.x,p.y,5.4,0,Math.PI*2);
+    ctx.fillStyle="#a87520";ctx.shadowColor="#ffc95f";ctx.shadowBlur=10;ctx.fill();
+    ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p.x-1.5,p.y-1.5,2,0,Math.PI*2);
+    ctx.fillStyle="#ffe8a4";ctx.fill();
+  }
+  if(ball){
+    ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
+    const g=ctx.createRadialGradient(ball.x-4,ball.y-5,1,ball.x,ball.y,ball.r);
+    g.addColorStop(0,"#fff");g.addColorStop(.55,"#eee5d6");g.addColorStop(1,"#817868");
+    ctx.fillStyle=g;ctx.shadowColor="#fff";ctx.shadowBlur=18;ctx.fill();ctx.shadowBlur=0;
+  }
+}
+function chooseTarget(){
+  // Pesos demonstrativos. Na versão de produção serão configuráveis.
+  const weights=[38,27,12,5,2,1,1,.5,.5,.2,5,5,3];
+  const total=weights.reduce((a,b)=>a+b,0);
+  let r=Math.random()*total;
+  for(let i=0;i<weights.length;i++){r-=weights[i];if(r<=0)return i}
+  return 0;
+}
+function launch(){
+  if(busy)return;
+  busy=true;play.disabled=true;status.textContent="A BOLA ESTÁ DESCENDO...";
+  const target=chooseTarget(),slotW=W/prizes.length,targetX=(target+.5)*slotW;
+  ball={x:W/2+(Math.random()-.5)*W*.16,y:61,r:13,vx:0,vy:0};
+  const start=performance.now();let last=start;
+  function frame(now){
+    const dt=Math.min((now-last)/16.67,2);last=now;
+    const t=Math.min((now-start)/4300,1);
+    ball.vy+=.23*dt;ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
+    ball.vx+=(targetX-ball.x)*(t<.70?.009:.05)*dt;ball.vx*=.987;
+    for(const p of pegs){
+      const dx=ball.x-p.x,dy=ball.y-p.y,dist=Math.hypot(dx,dy),min=ball.r+5;
+      if(dist<min){
+        const nx=dx/(dist||1),ny=dy/(dist||1);
+        ball.x=p.x+nx*min;ball.y=p.y+ny*min;
+        const dot=ball.vx*nx+ball.vy*ny;
+        ball.vx-=2*dot*nx;ball.vy-=2*dot*ny;
+        ball.vx+=(Math.random()-.5)*.9;ball.vy*=.68;
+      }
+    }
+    if(ball.x<18){ball.x=18;ball.vx=Math.abs(ball.vx)*.72}
+    if(ball.x>W-18){ball.x=W-18;ball.vx=-Math.abs(ball.vx)*.72}
+    draw();
+    if(t<1) raf=requestAnimationFrame(frame);
+    else{
+      ball.x=targetX;ball.y=H-45;draw();
+      setTimeout(()=>finish(target),350);
+    }
+  }
+  raf=requestAnimationFrame(frame);
+}
+function finish(i){
+  const p=prizes[i];resultTitle.textContent=p[0];
+  resultSub.textContent=p[1]==="CARRO 0 KM"
+    ? `Você ganhou ${p[0].toLowerCase()} para o sorteio do carro 0 km.`
+    : `${p[1].toLowerCase()} — prêmio liberado.`;
+  overlay.classList.add("show");status.textContent="RESULTADO REVELADO";
+  busy=false;play.disabled=false;
+}
+play.addEventListener("click",launch);
+next.addEventListener("click",()=>{overlay.classList.remove("show");ball=null;draw();status.textContent="PRONTO PARA A PRÓXIMA RODADA"});
+window.addEventListener("resize",resize);resize();
+</script>
+</body>
+</html>
