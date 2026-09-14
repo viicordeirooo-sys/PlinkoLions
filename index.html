@@ -1,312 +1,377 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PLINKO — Jogo de Prêmios</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Plinko</title>
 <style>
-:root{
-  --gold:#d9a33d; --gold-hi:#ffe39a; --gold-dark:#6b4310;
-  --red:#c71928; --red-dark:#5e080e; --cream:#f8edd0;
-}
-*{box-sizing:border-box}
-html,body{width:100%;height:100%;margin:0;overflow:hidden}
-body{
-  background:#020202;color:#fff;font-family:Arial,Helvetica,sans-serif;
-}
-#screen{
-  width:100vw;height:100vh;position:relative;overflow:hidden;
-  background:
-    radial-gradient(ellipse at 50% 45%,rgba(100,55,10,.28),transparent 36%),
-    linear-gradient(90deg,rgba(80,0,0,.34),transparent 16%,transparent 84%,rgba(80,0,0,.34)),
-    radial-gradient(ellipse at 50% 100%,#3a2109 0%,#0d0804 34%,#020202 75%);
-}
-#screen:after{
-  content:"";position:absolute;inset:0;pointer-events:none;
-  background:
-    radial-gradient(circle at 9% 23%,#ffc85b 0 2px,transparent 3px),
-    radial-gradient(circle at 91% 22%,#ffc85b 0 2px,transparent 3px),
-    radial-gradient(circle at 12% 64%,#ff6d37 0 2px,transparent 3px),
-    radial-gradient(circle at 88% 64%,#ff6d37 0 2px,transparent 3px);
-  opacity:.55;
-}
-.curtain{
-  position:absolute;top:-4%;height:110%;width:19%;
-  background:repeating-linear-gradient(92deg,#100001 0 13px,#4a050a 19px,#170103 33px);
-  box-shadow:0 0 30px #000;z-index:1;
-}
-.curtain.left{left:-5%;transform:skewX(-7deg)}
-.curtain.right{right:-5%;transform:skewX(7deg)}
-
-.header{position:absolute;left:0;right:0;top:2.5vh;text-align:center;z-index:5}
-.title{
-  margin:0;font-size:clamp(50px,6.8vw,112px);line-height:.85;
-  letter-spacing:7px;font-weight:900;color:#f4c65b;
-  text-shadow:0 3px 0 #75450a,0 0 4px #fff0ae,0 0 28px rgba(255,174,37,.45);
-}
-.title:after{
-  content:"";display:block;width:74%;height:4px;margin:1.5vh auto 0;
-  background:linear-gradient(90deg,transparent,var(--gold),transparent);
-  box-shadow:0 0 10px rgba(255,190,60,.55)
-}
-.subtitle{
-  margin-top:1.2vh;font-size:clamp(12px,1.35vw,22px);
-  letter-spacing:7px;color:#f5e8c9;text-transform:uppercase;
-}
-.side{
-  position:absolute;top:1vh;color:#ead8ad;font-size:clamp(10px,1vw,16px);
-  letter-spacing:4px;line-height:1.55;text-transform:uppercase;
-}
-.side.left{left:3%;text-align:left}.side.right{right:3%;text-align:right}
-
-.gameArea{
-  position:absolute;left:50%;top:17.5%;transform:translateX(-50%);
-  width:min(54vw,78vh);height:72%;
-  display:flex;flex-direction:column;align-items:center;z-index:4;
-}
-.boardOuter{
-  position:relative;width:100%;height:calc(100% - 85px);
-  padding:9px;border-radius:27px 27px 12px 12px;
-  background:linear-gradient(135deg,#efc45d 0%,#6b4511 13%,#f0c55e 50%,#6b4511 87%,#e5b64a 100%);
-  box-shadow:0 0 0 3px #120a02,0 0 38px rgba(255,180,40,.22),0 16px 45px #000;
-}
-.board{
-  width:100%;height:100%;position:relative;overflow:hidden;border-radius:19px 19px 7px 7px;
-  background:
-    radial-gradient(ellipse at 50% 0,rgba(255,195,70,.05),transparent 35%),
-    linear-gradient(#10100e,#040404);
-  box-shadow:inset 0 0 60px #000;
-}
-.board .topText{
-  position:absolute;top:2.2%;left:0;right:0;text-align:center;z-index:4;
-  color:#e4d2aa;font-size:clamp(10px,1vw,15px);letter-spacing:4px;
-}
-.dropArrows{
-  position:absolute;top:6.5%;left:0;right:0;display:flex;justify-content:center;gap:11%;z-index:5;
-}
-.dropArrows span{
-  width:42px;height:23px;position:relative;filter:drop-shadow(0 0 7px #ff2634)
-}
-.dropArrows span:before{
-  content:"";position:absolute;left:0;right:0;top:5px;height:6px;background:#ef3340;
-  clip-path:polygon(0 0,100% 0,76% 100%,24% 100%);
-}
-.dropArrows span:after{
-  content:"";position:absolute;left:50%;top:9px;width:3px;height:15px;background:#ef3340;
-  box-shadow:0 0 8px #ff2634;
-}
-#canvas{position:absolute;inset:0;width:100%;height:100%;z-index:3}
-
-.prizeRow{
-  width:100%;height:78px;display:grid;grid-template-columns:repeat(13,1fr);
-  margin-top:4px;z-index:7;
-}
-.prize{
-  border:1px solid rgba(235,184,71,.42);border-top:0;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  text-align:center;min-width:0;font-weight:800;
-  font-size:clamp(7px,.62vw,12px);line-height:1.02;
-  text-shadow:0 2px 4px #000;
-}
-.prize .ico{font-size:clamp(13px,1.35vw,21px);margin-bottom:3px}
-.cash1{background:linear-gradient(#63131b,#22070a)}
-.cash2{background:linear-gradient(#74121d,#24070b)}
-.cash3{background:linear-gradient(#7b164b,#260718)}
-.cash4{background:linear-gradient(#19387e,#08172f)}
-.cash5{background:linear-gradient(#17587d,#071b2b)}
-.cash6{background:linear-gradient(#126b67,#052420)}
-.ipad{background:linear-gradient(#146043,#061c15)}
-.phone{background:linear-gradient(#62206b,#1c071f)}
-.bike{background:linear-gradient(#80651b,#251b07)}
-.gold{background:linear-gradient(#8a5d12,#281805)}
-.car{background:linear-gradient(#7e111b,#24070a)}
-
-.buttonArea{
-  position:absolute;left:50%;bottom:2.5vh;transform:translateX(-50%);
-  z-index:8;text-align:center;
-}
-#play{
-  min-width:min(430px,42vw);padding:15px 38px;border-radius:16px;
-  border:2px solid #d9a13a;background:linear-gradient(#e0323c,#8d1118);
-  color:#fff;font-size:clamp(14px,1.4vw,22px);font-weight:900;letter-spacing:3px;
-  box-shadow:0 0 0 3px rgba(12,6,1,.9),0 0 28px rgba(218,32,42,.35),inset 0 1px #ff9999;
-  cursor:pointer;
-}
-#play:active{transform:scale(.985)}#play:disabled{opacity:.45;cursor:not-allowed}
-#status{margin-top:7px;color:#c7b894;font-size:11px;letter-spacing:2px;text-transform:uppercase}
-
-.overlay{
-  display:none;position:absolute;inset:0;z-index:50;
-  align-items:center;justify-content:center;background:rgba(0,0,0,.82);backdrop-filter:blur(6px);
-}
-.overlay.show{display:flex}
-.resultCard{
-  width:min(88vw,650px);padding:48px 32px;text-align:center;border-radius:25px;
-  border:2px solid #c99436;
-  background:radial-gradient(circle at 50% 0,#3b250b,#090806 67%);
-  box-shadow:0 0 80px rgba(255,187,49,.25)
-}
-.resultSmall{font-size:13px;letter-spacing:5px;color:#e4c66e}
-.resultCard h2{margin:16px 0 8px;font-size:clamp(38px,6vw,72px);color:#fff0c5}
-.resultCard p{margin:0 0 27px;color:#cfc1a4;font-size:17px}
-#next{
-  padding:14px 30px;border-radius:12px;border:1px solid #c89535;
-  background:#13100b;color:#f2ce72;font-weight:800;letter-spacing:2px;cursor:pointer
-}
-@media(max-aspect-ratio:4/3){
-  .side{display:none}
-  .gameArea{width:72vw;height:68%}
-}
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#07131d}
+  body{font-family:Arial,Helvetica,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
+  #game{position:fixed;inset:0;width:100vw;height:100vh;display:block;touch-action:none}
+  #hint{
+    position:fixed;left:50%;top:18px;transform:translateX(-50%);
+    padding:8px 14px;border-radius:999px;
+    background:rgba(0,0,0,.28);border:1px solid rgba(255,255,255,.08);
+    color:rgba(255,255,255,.65);font-size:12px;letter-spacing:.08em;
+    opacity:.8;transition:opacity .35s;pointer-events:none
+  }
+  #result{
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) scale(.92);
+    min-width:min(520px,82vw);padding:22px 30px;text-align:center;
+    border-radius:18px;background:rgba(8,10,14,.94);
+    border:2px solid #e7b94f;box-shadow:0 18px 80px rgba(0,0,0,.65);
+    color:white;opacity:0;pointer-events:none;transition:.25s ease
+  }
+  #result.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+  #result .small{font-size:13px;letter-spacing:.18em;color:#d8b05a;text-transform:uppercase}
+  #result .big{font-size:clamp(28px,5vw,64px);font-weight:900;margin-top:7px}
 </style>
 </head>
 <body>
-<div id="screen">
-  <div class="curtain left"></div><div class="curtain right"></div>
+<canvas id="game"></canvas>
+<div id="hint">TOQUE · ARRASTE · SOLTE</div>
+<div id="result"><div class="small">Prêmio</div><div class="big" id="resultText"></div></div>
 
-  <header class="header">
-    <div class="side left">GRANDES<br>PRÊMIOS<br>GRANDES<br>EMOÇÕES</div>
-    <div class="side right">SUA<br>SORTE<br>PODE<br>BRILHAR<br>AGORA</div>
-    <h1 class="title">PLINKO</h1>
-    <div class="subtitle">SOLTE A BOLA E DESCUBRA SEU PRÊMIO</div>
-  </header>
-
-  <section class="gameArea">
-    <div class="boardOuter">
-      <div class="board">
-        <div class="topText">ESCOLHA ONDE SOLTAR</div>
-        <div class="dropArrows"><span></span><span></span><span></span></div>
-        <canvas id="canvas"></canvas>
-      </div>
-    </div>
-
-    <div class="prizeRow">
-      <div class="prize cash1"><div class="ico">🪙</div>R$ 100<br>FICHAS</div>
-      <div class="prize cash2"><div class="ico">🪙</div>R$ 200<br>FICHAS</div>
-      <div class="prize cash3"><div class="ico">🪙</div>R$ 500<br>FICHAS</div>
-      <div class="prize cash4"><div class="ico">🪙</div>R$ 1.000<br>FICHAS</div>
-      <div class="prize cash5"><div class="ico">🪙</div>R$ 2.000<br>FICHAS</div>
-      <div class="prize cash6"><div class="ico">🪙</div>R$ 5.000<br>FICHAS</div>
-      <div class="prize ipad"><div class="ico">▣</div>iPad</div>
-      <div class="prize phone"><div class="ico">▯</div>iPhone<br>17 Pro Max</div>
-      <div class="prize bike"><div class="ico">🚲</div>Bicicleta<br>Elétrica</div>
-      <div class="prize gold"><div class="ico">▰</div>Barra<br>de Ouro</div>
-      <div class="prize car"><div class="ico">🚗</div>10 CUPONS<br>CARRO</div>
-      <div class="prize car"><div class="ico">🚗</div>15 CUPONS<br>CARRO</div>
-      <div class="prize car"><div class="ico">🚗</div>20 CUPONS<br>CARRO</div>
-    </div>
-  </section>
-
-  <div class="buttonArea">
-    <button id="play">APERTE O BOTÃO<br>PARA SOLTAR A BOLA</button>
-    <div id="status">PRONTO PARA A PRÓXIMA RODADA</div>
-  </div>
-
-  <div class="overlay" id="overlay">
-    <div class="resultCard">
-      <div class="resultSmall">RESULTADO</div>
-      <h2 id="resultTitle"></h2>
-      <p id="resultSub"></p>
-      <button id="next">PRÓXIMA RODADA</button>
-    </div>
-  </div>
-</div>
-
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.20.0/build/matter.min.js"></script>
 <script>
-const prizes=[
-  ["R$ 100","FICHAS"],["R$ 200","FICHAS"],["R$ 500","FICHAS"],
-  ["R$ 1.000","FICHAS"],["R$ 2.000","FICHAS"],["R$ 5.000","FICHAS"],
-  ["iPad","PRÊMIO"],["iPhone 17 Pro Max","PRÊMIO"],
-  ["Bicicleta Elétrica","PRÊMIO"],["Barra de Ouro","PRÊMIO"],
-  ["10 CUPONS","CARRO 0 KM"],["15 CUPONS","CARRO 0 KM"],["20 CUPONS","CARRO 0 KM"]
-];
+(() => {
+  const {Engine, World, Bodies, Body, Events} = Matter;
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  const hint = document.getElementById('hint');
+  const result = document.getElementById('result');
+  const resultText = document.getElementById('resultText');
 
-const canvas=document.getElementById("canvas"),ctx=canvas.getContext("2d");
-const board=document.querySelector(".board"),play=document.getElementById("play");
-const status=document.getElementById("status"),overlay=document.getElementById("overlay");
-const resultTitle=document.getElementById("resultTitle"),resultSub=document.getElementById("resultSub");
-const next=document.getElementById("next");
-let W=0,H=0,D=1,pegs=[],ball=null,raf=0,busy=false;
+  // Ordem dos resultados, da esquerda para a direita.
+  const PRIZES = [
+    'R$ 1.000', 'R$ 500', 'R$ 200', 'R$ 100',
+    '20 CUPONS', '15 CUPONS', '10 CUPONS',
+    'R$ 100', '10 CUPONS', '15 CUPONS', '20 CUPONS',
+    'R$ 100', 'R$ 200', 'R$ 500', 'R$ 1.000'
+  ];
 
-function resize(){
-  const r=board.getBoundingClientRect(); D=devicePixelRatio||1; W=r.width; H=r.height;
-  canvas.width=Math.round(W*D); canvas.height=Math.round(H*D);
-  ctx.setTransform(D,0,0,D,0,0); buildPegs(); draw();
-}
-function buildPegs(){
-  pegs=[];
-  const rows=13, top=92, bottom=H-70;
-  for(let row=0;row<rows;row++){
-    const y=top+(bottom-top)*row/(rows-1);
-    const count=row%2?8:7, span=W*.78, start=(W-span)/2;
-    for(let i=0;i<count;i++) pegs.push({x:start+i*span/(count-1),y});
+  const engine = Engine.create({enableSleeping:false});
+  engine.gravity.y = 1.18;
+  engine.positionIterations = 10;
+  engine.velocityIterations = 8;
+  engine.constraintIterations = 4;
+
+  let W=0,H=0,dpr=1;
+  let boardLeft=0, boardRight=0, boardTop=0, boardBottom=0;
+  let slotY=0, slotH=0, slotW=0;
+  let pegs=[];
+  let separators=[];
+  let ball=null;
+  let ballReleased=false;
+  let dragging=false;
+  let pointerX=0;
+  let roundLocked=false;
+  let lastTime=performance.now();
+  let settleTimer=null;
+
+  const palette = {
+    bg:'#07131d', peg:'#f2f2f2', pegGlow:'rgba(255,255,255,.16)',
+    red:'#ef3340', gold:'#e8b84e', orange:'#ef9c3a', dark:'#0b1118',
+    slotText:'#101419'
+  };
+
+  function clearWorld(){
+    World.clear(engine.world, false);
+    pegs=[]; separators=[]; ball=null; ballReleased=false; dragging=false;
   }
-}
-function draw(){
-  ctx.clearRect(0,0,W,H);
-  for(const p of pegs){
-    ctx.beginPath();ctx.arc(p.x,p.y,5.4,0,Math.PI*2);
-    ctx.fillStyle="#a87520";ctx.shadowColor="#ffc95f";ctx.shadowBlur=10;ctx.fill();
-    ctx.shadowBlur=0;ctx.beginPath();ctx.arc(p.x-1.5,p.y-1.5,2,0,Math.PI*2);
-    ctx.fillStyle="#ffe8a4";ctx.fill();
+
+  function resize(){
+    const rect=canvas.getBoundingClientRect();
+    W=rect.width; H=rect.height; dpr=Math.min(window.devicePixelRatio||1,2);
+    canvas.width=Math.max(1,Math.floor(W*dpr));
+    canvas.height=Math.max(1,Math.floor(H*dpr));
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+
+    clearWorld();
+
+    // Board occupies almost the entire screen; intentionally minimal UI.
+    const side=Math.min(W*.055,72);
+    boardLeft=side;
+    boardRight=W-side;
+    boardTop=Math.max(56,H*.055);
+    boardBottom=H-Math.max(105,H*.13);
+
+    const boardW=boardRight-boardLeft;
+    slotW=boardW/PRIZES.length;
+    slotY=boardBottom+10;
+    slotH=Math.max(72,H-slotY-18);
+
+    buildBoard();
   }
-  if(ball){
-    ctx.beginPath();ctx.arc(ball.x,ball.y,ball.r,0,Math.PI*2);
-    const g=ctx.createRadialGradient(ball.x-4,ball.y-5,1,ball.x,ball.y,ball.r);
-    g.addColorStop(0,"#fff");g.addColorStop(.55,"#eee5d6");g.addColorStop(1,"#817868");
-    ctx.fillStyle=g;ctx.shadowColor="#fff";ctx.shadowBlur=18;ctx.fill();ctx.shadowBlur=0;
-  }
-}
-function chooseTarget(){
-  // Pesos demonstrativos. Na versão de produção serão configuráveis.
-  const weights=[38,27,12,5,2,1,1,.5,.5,.2,5,5,3];
-  const total=weights.reduce((a,b)=>a+b,0);
-  let r=Math.random()*total;
-  for(let i=0;i<weights.length;i++){r-=weights[i];if(r<=0)return i}
-  return 0;
-}
-function launch(){
-  if(busy)return;
-  busy=true;play.disabled=true;status.textContent="A BOLA ESTÁ DESCENDO...";
-  const target=chooseTarget(),slotW=W/prizes.length,targetX=(target+.5)*slotW;
-  ball={x:W/2+(Math.random()-.5)*W*.16,y:61,r:13,vx:0,vy:0};
-  const start=performance.now();let last=start;
-  function frame(now){
-    const dt=Math.min((now-last)/16.67,2);last=now;
-    const t=Math.min((now-start)/4300,1);
-    ball.vy+=.23*dt;ball.x+=ball.vx*dt;ball.y+=ball.vy*dt;
-    ball.vx+=(targetX-ball.x)*(t<.70?.009:.05)*dt;ball.vx*=.987;
-    for(const p of pegs){
-      const dx=ball.x-p.x,dy=ball.y-p.y,dist=Math.hypot(dx,dy),min=ball.r+5;
-      if(dist<min){
-        const nx=dx/(dist||1),ny=dy/(dist||1);
-        ball.x=p.x+nx*min;ball.y=p.y+ny*min;
-        const dot=ball.vx*nx+ball.vy*ny;
-        ball.vx-=2*dot*nx;ball.vy-=2*dot*ny;
-        ball.vx+=(Math.random()-.5)*.9;ball.vy*=.68;
+
+  function buildBoard(){
+    const boardW=boardRight-boardLeft;
+    const cx=(boardLeft+boardRight)/2;
+
+    // Invisible side walls.
+    World.add(engine.world, [
+      Bodies.rectangle(boardLeft-16,(boardTop+boardBottom)/2,32,boardBottom-boardTop+160,
+        {isStatic:true,label:'wall'}),
+      Bodies.rectangle(boardRight+16,(boardTop+boardBottom)/2,32,boardBottom-boardTop+160,
+        {isStatic:true,label:'wall'})
+    ]);
+
+    // Peg field. Each row alternates by half a spacing so the ball always
+    // has multiple natural collision paths.
+    const rows=12;
+    const spacingX=Math.min(slotW*.72,52);
+    const spacingY=Math.min((boardBottom-boardTop)*.078,52);
+    const firstY=boardTop+70;
+
+    for(let r=0;r<rows;r++){
+      const y=firstY+r*spacingY;
+      const offset=(r%2 ? spacingX/2 : 0);
+      const usable=boardW-26;
+      const count=Math.floor(usable/spacingX)+1;
+      const start=cx-(count-1)*spacingX/2+offset;
+
+      for(let i=0;i<count;i++){
+        const x=start+i*spacingX;
+        if(x>boardLeft+15 && x<boardRight-15 && y<boardBottom-45){
+          const peg=Bodies.circle(x,y,5.6,{
+            isStatic:true,
+            restitution:.42,
+            friction:.04,
+            label:'peg'
+          });
+          pegs.push(peg);
+        }
       }
     }
-    if(ball.x<18){ball.x=18;ball.vx=Math.abs(ball.vx)*.72}
-    if(ball.x>W-18){ball.x=W-18;ball.vx=-Math.abs(ball.vx)*.72}
-    draw();
-    if(t<1) raf=requestAnimationFrame(frame);
-    else{
-      ball.x=targetX;ball.y=H-45;draw();
-      setTimeout(()=>finish(target),350);
+    World.add(engine.world,pegs);
+
+    // Bottom funnels: slightly sloped guides before the bins.
+    const funnelY=boardBottom-18;
+    const guideH=10;
+    const guideAngle=Math.PI/8;
+    const guideLen=Math.min(90,slotW*1.45);
+    for(let i=0;i<PRIZES.length-1;i++){
+      const x=boardLeft+slotW*(i+1);
+      const left=Bodies.rectangle(x-guideLen*.32,funnelY,guideLen,guideH,
+        {isStatic:true,angle:guideAngle,label:'guide'});
+      const right=Bodies.rectangle(x+guideLen*.32,funnelY,guideLen,guideH,
+        {isStatic:true,angle:-guideAngle,label:'guide'});
+      // Only use the pair when it stays in its local region; these are
+      // shallow visual/physical funnels and don't seal the bins.
+      World.add(engine.world,[left,right]);
+    }
+
+    // Bin separators. The actual prize is determined by the bin in which
+    // the ball crosses the scoring line.
+    const sepTop=boardBottom+2;
+    const sepBottom=H+30;
+    for(let i=0;i<=PRIZES.length;i++){
+      const x=boardLeft+i*slotW;
+      const wall=Bodies.rectangle(x, (sepTop+sepBottom)/2, 5, sepBottom-sepTop,
+        {isStatic:true,label:'separator'});
+      separators.push(wall);
+    }
+    World.add(engine.world,separators);
+
+    // Floor below the bins.
+    World.add(engine.world,Bodies.rectangle((boardLeft+boardRight)/2,H+18,boardW+20,36,
+      {isStatic:true,label:'floor'}));
+  }
+
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+  function makeBall(x){
+    if(roundLocked || ball) return;
+    const y=boardTop+22;
+    ball=Bodies.circle(x,y,5.8,{
+
+      restitution:.38,
+      friction:.018,
+      frictionAir:.0022,
+      density:.0022,
+      label:'ball',
+      sleepThreshold:Infinity
+    });
+    Body.setVelocity(ball,{x:0,y:0});
+    World.add(engine.world,ball);
+  }
+
+  function releaseBall(){
+    if(!ball || ballReleased || roundLocked) return;
+    ballReleased=true;
+    dragging=false;
+    hint.style.opacity='.12';
+
+    // Tiny, deterministic-free nudge only to prevent a perfectly vertical
+    // deadlock. The physics engine decides every subsequent collision.
+    Body.setVelocity(ball,{x:(Math.random()-.5)*.22,y:.35});
+    Body.setAngularVelocity(ball,(Math.random()-.5)*.04);
+  }
+
+  function pointerPos(e){
+    const r=canvas.getBoundingClientRect();
+    return {x:e.clientX-r.left,y:e.clientY-r.top};
+  }
+
+  canvas.addEventListener('pointerdown',e=>{
+    if(roundLocked) return;
+    e.preventDefault();
+    canvas.setPointerCapture?.(e.pointerId);
+    const p=pointerPos(e);
+    pointerX=clamp(p.x,boardLeft+15,boardRight-15);
+
+    if(!ball) makeBall(pointerX);
+    if(ball && !ballReleased){
+      dragging=true;
+      Body.setPosition(ball,{x:pointerX,y:boardTop+22});
+      Body.setVelocity(ball,{x:0,y:0});
+    }
+  },{passive:false});
+
+  canvas.addEventListener('pointermove',e=>{
+    if(!dragging || !ball || ballReleased || roundLocked) return;
+    e.preventDefault();
+    const p=pointerPos(e);
+    pointerX=clamp(p.x,boardLeft+15,boardRight-15);
+    Body.setPosition(ball,{x:pointerX,y:boardTop+22});
+    Body.setVelocity(ball,{x:0,y:0});
+  },{passive:false});
+
+  function pointerup(e){
+    if(!dragging) return;
+    e.preventDefault();
+    releaseBall();
+  }
+  canvas.addEventListener('pointerup',pointerup,{passive:false});
+  canvas.addEventListener('pointercancel',pointerup,{passive:false});
+
+  // If the ball crosses the scoring line, lock in the actual bin.
+  Events.on(engine,'afterUpdate',()=>{
+    if(!ball || !ballReleased) return;
+
+    if(ball.position.y > boardBottom+18 && !roundLocked){
+      const idx=clamp(Math.floor((ball.position.x-boardLeft)/slotW),0,PRIZES.length-1);
+      // Don't award until the ball has actually settled into the bin.
+      if(ball.position.y > H-28 || (Math.abs(ball.velocity.y)<.18 && ball.position.y>boardBottom+28)){ 
+        finishRound(idx);
+      }
+    }
+
+    // Safety: if physics sends it outside the board, reset without changing
+    // the visual outcome.
+    if(ball.position.y>H+100){
+      const idx=clamp(Math.floor((ball.position.x-boardLeft)/slotW),0,PRIZES.length-1);
+      finishRound(idx);
+    }
+  });
+
+  function finishRound(idx){
+    if(roundLocked) return;
+    roundLocked=true;
+    const prize=PRIZES[idx];
+    resultText.textContent=prize;
+    result.classList.add('show');
+
+    clearTimeout(settleTimer);
+    settleTimer=setTimeout(()=>{
+      result.classList.remove('show');
+      roundLocked=false;
+      World.remove(engine.world,ball);
+      ball=null;
+      ballReleased=false;
+      hint.style.opacity='.8';
+    },1800);
+  }
+
+  function drawBackground(){
+    const g=ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0,'#091722');
+    g.addColorStop(.6,'#07131d');
+    g.addColorStop(1,'#050d14');
+    ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+
+    // Very subtle vignette; no decorative UI.
+    const vg=ctx.createRadialGradient(W/2,H*.42,Math.min(W,H)*.08,W/2,H*.42,Math.max(W,H)*.72);
+    vg.addColorStop(0,'rgba(255,255,255,.035)');
+    vg.addColorStop(1,'rgba(0,0,0,.35)');
+    ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+  }
+
+  function drawPegs(){
+    for(const p of pegs){
+      ctx.beginPath();ctx.arc(p.position.x,p.position.y,10,0,Math.PI*2);
+      ctx.fillStyle=palette.pegGlow;ctx.fill();
+      ctx.beginPath();ctx.arc(p.position.x,p.position.y,5.6,0,Math.PI*2);
+      ctx.fillStyle=palette.peg;ctx.fill();
     }
   }
-  raf=requestAnimationFrame(frame);
-}
-function finish(i){
-  const p=prizes[i];resultTitle.textContent=p[0];
-  resultSub.textContent=p[1]==="CARRO 0 KM"
-    ? `Você ganhou ${p[0].toLowerCase()} para o sorteio do carro 0 km.`
-    : `${p[1].toLowerCase()} — prêmio liberado.`;
-  overlay.classList.add("show");status.textContent="RESULTADO REVELADO";
-  busy=false;play.disabled=false;
-}
-play.addEventListener("click",launch);
-next.addEventListener("click",()=>{overlay.classList.remove("show");ball=null;draw();status.textContent="PRONTO PARA A PRÓXIMA RODADA"});
-window.addEventListener("resize",resize);resize();
+
+  function roundRect(x,y,w,h,r){
+    const rr=Math.min(r,w/2,h/2);
+    ctx.beginPath();ctx.moveTo(x+rr,y);ctx.arcTo(x+w,y,x+w,y+h,rr);
+    ctx.arcTo(x+w,y+h,x,y+h,rr);ctx.arcTo(x,y+h,x,y,rr);ctx.arcTo(x,y,x+w,y,rr);ctx.closePath();
+  }
+
+  function drawSlots(){
+    const y=slotY+4, h=slotH-7;
+    for(let i=0;i<PRIZES.length;i++){
+      const x=boardLeft+i*slotW+2;
+      const w=slotW-4;
+      const hot=(i===Math.floor(PRIZES.length/2));
+      ctx.fillStyle=hot?'#efb044':(i%2?'#ef8f35':'#e93340');
+      roundRect(x,y,w,h,7);ctx.fill();
+
+      ctx.fillStyle='rgba(0,0,0,.18)';
+      ctx.fillRect(x,y+h-6,w,6);
+
+      ctx.fillStyle=palette.slotText;
+      ctx.font=`900 ${Math.max(11,Math.min(18,slotW*.22))}px Arial`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      const lines=PRIZES[i].split(' ');
+      let label=PRIZES[i];
+      if(slotW<72 && PRIZES[i].includes('CUPONS')){
+        label=PRIZES[i].replace(' CUPONS','');
+      }
+      ctx.fillText(label,x+w/2,y+h/2);
+    }
+  }
+
+  function drawBall(){
+    if(!ball)return;
+    const x=ball.position.x,y=ball.position.y;
+    const rg=ctx.createRadialGradient(x-2,y-2.5,0.5,x,y,6.2);
+    rg.addColorStop(0,'#ffffff');rg.addColorStop(.35,'#d9dde0');rg.addColorStop(1,'#70777c');
+    ctx.beginPath();ctx.arc(x,y,5.8,0,Math.PI*2);ctx.fillStyle=rg;ctx.fill();
+    ctx.beginPath();ctx.arc(x-1.7,y-2,1.5,0,Math.PI*2);ctx.fillStyle='rgba(255,255,255,.7)';ctx.fill();
+  }
+
+  function drawReleaseBall(){
+    if(ballReleased || !ball) return;
+    const x=ball.position.x,y=boardTop+22;
+    ctx.beginPath();ctx.arc(x,y,12,0,Math.PI*2);ctx.fillStyle='rgba(239,51,64,.12)';ctx.fill();
+    ctx.beginPath();ctx.arc(x,y,6,0,Math.PI*2);ctx.fillStyle=palette.red;ctx.fill();
+  }
+
+  function render(){
+    drawBackground();
+    drawPegs();
+    drawSlots();
+    drawReleaseBall();
+    drawBall();
+  }
+
+  function loop(t){
+    const dt=Math.min(33,t-lastTime);lastTime=t;
+    if(!roundLocked) Engine.update(engine,dt);
+    render();
+    requestAnimationFrame(loop);
+  }
+
+  window.addEventListener('resize',resize);
+  resize();
+  requestAnimationFrame(loop);
+})();
 </script>
 </body>
 </html>
