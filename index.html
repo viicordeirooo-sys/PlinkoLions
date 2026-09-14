@@ -44,13 +44,13 @@ function fit(){
  ctx.setTransform(D,0,0,D,0,0);fx.setTransform(D,0,0,D,0,0);
 
  if(isPortrait){
-   board={cx:W/2,top:H*.105,bottom:H*.675,topHalf:W*.215,bottomHalf:W*.455};
+   board={cx:W/2,top:H*.205,bottom:H*.705,topHalf:W*.085,bottomHalf:W*.455};
  }else{
    const s=Math.min(W/1536,H/864);
-   board={cx:W/2,top:H*.12,bottom:H*.78,topHalf:212*s,bottomHalf:535*s};
+   board={cx:W/2,top:H*.18,bottom:H*.77,topHalf:108*s,bottomHalf:535*s};
  }
  buildPegs();
- if(ball&&state==="drag"){ball.r=isPortrait?Math.max(5,W*.0078):8.5;ball.y=board.top+32}
+ if(ball&&state==="drag"){ball.r=isPortrait?Math.min(5.2,W*.013):8.2;ball.y=board.top+32}
  draw();
 }
 
@@ -64,23 +64,19 @@ function sideAt(y){
 
 function buildPegs(){
  pegs=[];
- const rows=isPortrait?11:11;
- const firstY=board.top+62,lastY=board.bottom-75;
- const gapMax=isPortrait?34:67;
+ const rows=11;
+ const firstY=board.top+62,lastY=board.bottom-70;
+ const ballR=isPortrait?5.2:8.2;
+ const pegR=isPortrait?3.0:5.0;
+ const safety=ballR+pegR+6;
  for(let r=0;r<rows;r++){
-   const n=7+r;
-   const y=lerp(firstY,lastY,r/(rows-1));
-   const s=sideAt(y);
-   const available=(s.right-s.left)-18;
-   /* Cada fileira calcula o próprio espaçamento a partir da largura REAL
-      do triângulo. Nenhum pino pode sair da moldura. */
-   const gap=Math.min(gapMax,available/(n-1));
-   const used=gap*(n-1);
-   const start=board.cx-used/2+(r%2?gap/2:0);
-   for(let i=0;i<n;i++){
-     const x=start+i*gap;
-     if(x>=s.left+7&&x<=s.right-7)pegs.push({x,y,r:isPortrait?3.0:5.0});
-   }
+   const t=r/(rows-1),y=lerp(firstY,lastY,t);
+   const sides=sideAt(y);
+   const half=Math.max(10,(sides.right-sides.left)/2-safety);
+   const n=3+r;
+   const gap=(2*half)/(n-1);
+   const start=board.cx-half;
+   for(let i=0;i<n;i++) pegs.push({x:start+i*gap,y,r:pegR});
  }
 }
 
