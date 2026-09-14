@@ -28,7 +28,7 @@ filter:drop-shadow(0 0 18px rgba(255,25,35,.18));z-index:1}
 .subtitle{margin-top:9px;font-size:clamp(15px,1.5vw,26px);font-weight:800;letter-spacing:.7px;color:#ffe3a2;text-shadow:0 0 8px #d78a18}
 .sideText{position:absolute;z-index:4;top:10.5%;width:13%;font-size:clamp(12px,1.18vw,22px);font-weight:900;line-height:1.2;text-align:center;color:#f7dda5;text-shadow:0 0 10px #ffad28}
 .sideText.l{left:22%}.sideText.r{right:22%}
-#game{position:absolute;inset:0;width:100%;height:100%;z-index:3;touch-action:none}
+#game{position:absolute;z-index:3;touch-action:none;display:block}
 .hint{position:absolute;z-index:8;bottom:1.1%;left:50%;transform:translateX(-50%);font-size:clamp(10px,.8vw,14px);color:#c9b18a;letter-spacing:1px;text-transform:uppercase;opacity:.9}
 .result{position:absolute;z-index:20;left:50%;top:43%;transform:translate(-50%,-50%) scale(.96);min-width:min(520px,80vw);padding:26px 34px;border:2px solid #f2bd45;border-radius:18px;background:linear-gradient(180deg,rgba(22,13,5,.97),rgba(3,3,3,.98));box-shadow:0 0 50px rgba(255,174,45,.4),inset 0 0 30px rgba(255,174,45,.08);text-align:center;opacity:0;pointer-events:none;transition:.25s}
 .result.show{opacity:1;transform:translate(-50%,-50%) scale(1)}.result small{color:#d6b47b;text-transform:uppercase;letter-spacing:2px}.result strong{display:block;margin-top:8px;font-size:clamp(28px,3vw,48px);color:#ffd45b}.again{margin-top:18px;border:1px solid #d9a83e;background:#120b03;color:#ffe5a5;border-radius:999px;padding:10px 22px;font-weight:900;cursor:pointer}
@@ -68,8 +68,15 @@ let cfg={weights:prizes.map((_,i)=>[12,10,7,5,4,3,2,1.5,1.2,.8,3,2,1][i]),active
 try{const s=JSON.parse(localStorage.getItem('plinko_cfg'));if(s)cfg=Object.assign(cfg,s)}catch(e){}
 let W=1536,H=864,dpr=1,board={x:220,y:156,w:1096,h:690},pegs=[],ball=null,running=false,drag=false,last=0,targetBin=null;
 function resize(){
- dpr=Math.min(2,devicePixelRatio||1); W=1536;H=864; canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width='100%';canvas.style.height='100%';ctx.setTransform(dpr,0,0,dpr,0,0);
- const s=Math.min(innerWidth/W,innerHeight/H); const ox=(innerWidth-W*s)/2,oy=(innerHeight-H*s)/2; canvas.style.transform=`translate(${ox}px,${oy}px) scale(${s})`; canvas.style.transformOrigin='top left';
+ dpr=Math.min(2,devicePixelRatio||1); W=1536; H=864;
+ canvas.width=Math.round(W*dpr); canvas.height=Math.round(H*dpr);
+ canvas.style.position='absolute';
+ canvas.style.left='50%'; canvas.style.top='50%';
+ canvas.style.width=W+'px'; canvas.style.height=H+'px';
+ const scale=Math.max(innerWidth/W,innerHeight/H);
+ canvas.style.transform=`translate(-50%,-50%) scale(${scale})`;
+ canvas.style.transformOrigin='center center';
+ ctx.setTransform(dpr,0,0,dpr,0,0);
  build();
 }
 function build(){
