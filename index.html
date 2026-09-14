@@ -14,7 +14,7 @@ body{font-family:Arial,Helvetica,sans-serif;color:#fff}
  radial-gradient(ellipse at 96% 30%,rgba(190,119,18,.28),transparent 15%),
  radial-gradient(ellipse at 50% 43%,rgba(91,49,8,.16),transparent 42%),
  linear-gradient(#030303,#080604 60%,#020202)}
-#game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#game{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;z-index:7}
 .top{position:absolute;z-index:5;top:2.3%;left:50%;transform:translateX(-50%);width:100%;text-align:center;pointer-events:none}
 .title{display:inline-block;padding:0 14px 4px;border:2px solid rgba(244,191,67,.65);border-radius:10px;background:linear-gradient(#3a2509,#120c03);font-family:Georgia,serif;font-weight:900;font-size:clamp(39px,6vw,88px);line-height:.82;letter-spacing:1px;color:#ffd35e;text-shadow:0 0 6px #ffae1c,0 2px 0 #7b4000,0 0 20px rgba(255,174,31,.55);box-shadow:0 0 18px rgba(255,174,31,.18),inset 0 0 12px rgba(255,206,96,.12)}
 .sub{margin-top:8px;font-size:clamp(12px,1.55vw,24px);font-weight:900;letter-spacing:.45px;color:#ffe6aa;text-shadow:0 0 9px rgba(255,171,32,.7)}
@@ -42,6 +42,7 @@ body{font-family:Arial,Helvetica,sans-serif;color:#fff}
 <canvas id="game"></canvas>
 <div class="prizes" id="prizes"></div>
 </div>
+<div id="result" style="position:absolute;z-index:10;left:50%;top:58%;transform:translate(-50%,-50%);display:none;pointer-events:none;text-align:center;padding:14px 20px;border:2px solid #f4bf43;border-radius:12px;background:rgba(10,7,2,.94);box-shadow:0 0 25px rgba(255,185,45,.45);color:#fff;font-family:Arial,sans-serif;font-weight:900"><div style="font-size:12px;color:#ffd86b;letter-spacing:1px">PRÊMIO</div><div id="resultText" style="font-size:22px;margin-top:4px"></div></div>
 <script>
 const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
 const prizeData=[
@@ -126,7 +127,7 @@ function move(e){
 }
 function release(e){
  if(!dragging)return;dragging=false;
- targetBin=pickTarget();ball.vx=(targetX(targetBin)-ball.x)*.0018;ball.vy=0.8;running=true;e.preventDefault();
+ targetBin=pickTarget();ball.vx=(targetX(targetBin)-ball.x)*.0018;ball.vy=0.8;running=true;document.getElementById('result').style.display='none';e.preventDefault();
 }
 canvas.addEventListener('pointerdown',begin,{passive:false});
 canvas.addEventListener('pointermove',move,{passive:false});
@@ -138,6 +139,7 @@ function step(){
   const dt=1;
   ball.vy+=.075;ball.x+=ball.vx;ball.y+=ball.vy;
   ball.vx*=.996;
+  ball.x=Math.max(ball.r,Math.min(W-ball.r,ball.x));
   // very small bias toward selected bin; collisions remain the visible motion
   ball.vx+=(targetX(targetBin)-ball.x)*.000045;
   for(const p of pegs){
@@ -149,8 +151,8 @@ function step(){
     ball.vx+=(Math.random()-.5)*.06;
    }
   }
-  const floor=H*.755;
-  if(ball.y>floor){ball.y=floor;ball.vy*=.25;if(Math.abs(ball.vy)<.8){running=false;ball.x=targetX(targetBin);ball.y=floor;
+  const floor=H*.885;
+  if(ball.y>floor){ball.y=floor;ball.vy*=.25;if(Math.abs(ball.vy)<.8){running=false;ball.x=targetX(targetBin);ball.y=floor;document.getElementById('resultText').textContent=prizeData[targetBin][0]+' '+prizeData[targetBin][1];document.getElementById('result').style.display='block';
     if(Array.isArray(cfg.stock)&&cfg.stock[targetBin]!==undefined&&Number.isFinite(+cfg.stock[targetBin])&&+cfg.stock[targetBin]>0){cfg.stock[targetBin]=Math.max(0,+cfg.stock[targetBin]-1);localStorage.setItem('plinko_cfg',JSON.stringify(cfg));}
   }}
  }
