@@ -16,7 +16,7 @@ canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 #effects{z-index:3;pointer-events:none}
 #shade{position:absolute;inset:0;z-index:4;pointer-events:none;background:radial-gradient(ellipse at center,transparent 48%,rgba(0,0,0,.48) 100%)}
 #hud{position:absolute;inset:0;z-index:5;pointer-events:none}
-#hint{position:absolute;left:50%;top:20.4%;transform:translateX(-50%);font-weight:900;letter-spacing:.16em;font-size:clamp(10px,1.25vw,20px);white-space:nowrap;color:#ffe19a;text-shadow:0 0 10px #ff9900}
+#hint{display:none;position:absolute;left:50%;top:20.4%;transform:translateX(-50%);font-weight:900;letter-spacing:.16em;font-size:clamp(10px,1.25vw,20px);white-space:nowrap;color:#ffe19a;text-shadow:0 0 10px #ff9900}
 #result{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.9);opacity:0;
 padding:18px 30px;min-width:min(360px,80vw);text-align:center;border:2px solid #ffd35c;border-radius:14px;
 background:rgba(5,3,2,.97);box-shadow:0 0 35px #ff9500,inset 0 0 25px rgba(255,170,0,.18);transition:.25s}
@@ -68,7 +68,7 @@ function fit(){
        Nada é esmagado nem sobreposto. */
     board={
       cx:W/2,
-      top:Math.max(185,H*.205),
+      top:Math.max(125,H*.145),
       bottom:H*.73,
       topHalf:Math.min(W*.19,118),
       bottomHalf:Math.min(W*.45,250)
@@ -78,7 +78,7 @@ function fit(){
     board={cx:W/2,top:H*.18,bottom:H*.815,topHalf:212*s,bottomHalf:535*s};
   }
   buildPegs();
-  if(ball && state!=="fall"){ball.x=clamp(ball.x,board.cx-board.topHalf+10,board.cx+board.topHalf-10);ball.y=board.top-2}
+  if(ball && state!=="fall"){ball.x=clamp(ball.x,board.cx-board.topHalf+10,board.cx+board.topHalf-10);ball.y=board.top+34}
   draw();
 }
 function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
@@ -86,20 +86,26 @@ function lerp(a,b,t){return a+(b-a)*t}
 
 function buildPegs(){
   pegs=[];
-  const rows=mobile?10:10;
-  const top=board.top+65*(mobile?1:1), bottom=board.bottom-78;
-  const gap=mobile?Math.min(38,W*.095):Math.min(70,W*.046);
-  const center=board.cx;
+  /* As bolinhas ficam SEMPRE dentro das paredes do triângulo.
+     Cada fileira é calculada a partir da largura real do tabuleiro naquele Y. */
+  const rows=9;
+  const top=board.top+64;
+  const bottom=board.bottom-78;
+  const baseGap=mobile?38:69;
+  const sideMargin=mobile?18:28;
   for(let r=0;r<rows;r++){
-    const n=7+r;
     const y=lerp(top,bottom,r/(rows-1));
-    const start=center-(n-1)*gap/2;
-    for(let i=0;i<n;i++)pegs.push({x:start+i*gap,y,r:mobile?3.7:5.6});
+    const t=clamp((y-board.top)/(board.bottom-board.top),0,1);
+    const half=lerp(board.topHalf,board.bottomHalf,t);
+    const n=7+r; // 7 até 15, como na referência
+    const maxGap=(2*(half-sideMargin))/(n-1);
+    const gap=Math.min(baseGap,maxGap);
+    const usableHalf=gap*(n-1)/2;
+    const start=board.cx-usableHalf;
+    for(let i=0;i<n;i++){
+      pegs.push({x:start+i*gap,y,r:mobile?4.2:5.8});
+    }
   }
-}
-
-function rounded(x,y,w,h,r,fill,stroke){
-  ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill()}if(stroke){ctx.strokeStyle=stroke;ctx.stroke()}
 }
 
 function background(){
@@ -160,25 +166,7 @@ function lightBulb(x,y,r){
   ctx.save();ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fillStyle="#fff2ad";ctx.shadowColor="#ffab17";ctx.shadowBlur=12;ctx.fill();ctx.restore();
 }
 
-function title(){
-  const fs=mobile?Math.min(W*.135,62):Math.min(W*.059,92);
-  ctx.save();ctx.textAlign="center";ctx.textBaseline="middle";ctx.font=`1000 ${fs}px Arial`;
-  ctx.fillStyle="#ffd35a";ctx.shadowColor="#ff9200";ctx.shadowBlur=24;ctx.fillText("PLINKO",W/2,fs*.72);
-  ctx.fillStyle="#ffdb68";ctx.shadowBlur=8;ctx.fillText("PLINKO",W/2,fs*.68);
-  // lâmpadas decorativas
-  const spacing=fs*.56;
-  for(let i=-5;i<=5;i++)if(i%2===0)lightBulb(W/2+i*spacing,fs*.25,Math.max(2,fs*.045));
-  ctx.restore();
-
-  const sub=mobile?Math.min(W*.035,15):Math.min(W*.015,22);
-  ctx.save();ctx.textAlign="center";ctx.font=`900 ${sub}px Arial`;ctx.fillStyle="#ffd875";ctx.shadowColor="#ff8a00";ctx.shadowBlur=8;
-  ctx.fillText("SOLTE A BOLA E DESCUBRA SEU PRÊMIO",W/2,fs*.68+sub*2.25);ctx.restore();
-
-  if(!mobile){
-    sideText(["GRANDES","PRÊMIOS","GRANDES","EMOÇÕES"],W*.267,H*.115);
-    sideText(["SUA","SORTE","PODE","BRILHAR","AGORA"],W*.733,H*.115);
-  }
-}
+function title(){}
 function sideText(lines,x,y){
   ctx.save();ctx.textAlign="center";ctx.font="900 20px Arial";ctx.fillStyle="#ffe5a5";ctx.shadowColor="#ff8b00";ctx.shadowBlur=8;
   lines.forEach((s,i)=>ctx.fillText(s,x,y+i*24));ctx.restore();
@@ -267,10 +255,10 @@ function effects(){
   fctx.fillStyle=g;fctx.fillRect(cx-90,y-80,180,160);
 }
 
-function draw(){background();title();boardDraw();pegsDraw();prizesDraw();drawBall();effects()}
+function draw(){background();boardDraw();pegsDraw();prizesDraw();drawBall();effects()}
 
 function start(x){
-  ball={x:clamp(x,board.cx-board.topHalf+10,board.cx+board.topHalf-10),y:board.top+42,vx:0,vy:0,r:mobile?6.2:9.2,age:0};
+  ball={x:clamp(x,board.cx-board.topHalf+12,board.cx+board.topHalf-12),y:board.top+34,vx:0,vy:0,r:mobile?6.2:9.2,age:0};
   state="drag";pointerId=null;hint.textContent="TOQUE • ARRASTE • SOLTE";draw();
 }
 function finish(){
@@ -342,7 +330,7 @@ function down(e){
   e.preventDefault();
   if(state==="fall")return;
   const p=eventPoint(e);
-  const zoneTop=board.top-35,zoneBottom=board.top+85;
+  const zoneTop=board.top-25,zoneBottom=board.top+75;
   if(p.y>=zoneTop&&p.y<=zoneBottom){
     pointerId=e.pointerId;
     canvas.setPointerCapture?.(pointerId);
@@ -354,8 +342,8 @@ function move(e){
   if(pointerId!==e.pointerId||state!=="drag")return;
   e.preventDefault();
   const p=eventPoint(e);
-  ball.x=clamp(p.x,board.cx-board.topHalf+10,board.cx+board.topHalf-10);
-  ball.y=board.top+42;draw();
+  ball.x=clamp(p.x,board.cx-board.topHalf+12,board.cx+board.topHalf-12);
+  ball.y=board.top+34;draw();
 }
 function up(e){
   if(pointerId!==e.pointerId)return;
