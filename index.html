@@ -83,14 +83,18 @@ function build(){
     const cx=W/2, side=W*.055, bw=W*.89;
     const topY=H*.285, bottomY=H*.765;
     board={x:side,y:H*.275,w:bw,h:H*.505}; pegs=[];
-    const rows=12;
+    const rows=10;
     for(let r=0;r<rows;r++){
-      const t=r/(rows-1), half=W*(.075+t*.365), n=6+r, gap=(half*2)/(n-1);
-      for(let i=0;i<n;i++) pegs.push({x:cx-half+i*gap,y:topY+t*(bottomY-topY),r:Math.max(3.8,W*.0105)});
+      const t=r/(rows-1);
+      const half=W*(.035+t*.385);
+      const n=6+r;
+      const gap=(half*2)/(n-1);
+      const y=topY+t*(bottomY-topY);
+      for(let i=0;i<n;i++) pegs.push({x:cx-half+i*gap,y,r:Math.max(3.5,Math.min(5.2,W*.0105))});
     }
   }else{
     board={x:165,y:157,w:1205,h:690}; pegs=[];
-    const rows=12, topY=258, bottomY=646;
+    const rows=10, topY=258, bottomY=646;
     for(let r=0;r<rows;r++){const t=r/(rows-1),half=92+t*438,n=6+r,gap=(half*2)/(n-1);for(let i=0;i<n;i++)pegs.push({x:768-half+i*gap,y:topY+t*(bottomY-topY),r:6.5});}
   }
 }
